@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "bajeti-app",
-    "slug": "bajeti-app",
+    "name": "Bajeti",
+    "slug": "bajeti",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
