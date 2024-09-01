@@ -1,0 +1,44 @@
+Bajeti Dev log
+
+Day 1
+
+So here's what's happening. I'm going to build and deploy an app in 2 weeks. Every day I will write in the dev log, set a timer for an hour
+and a half, code, then write in the dev log again. Weekends have unlimited coding time. Let's learn together.
+
+What are we building? 
+
+Bajeti is a mobile budgeting app that allows you to keep track of your spending. Enter income and expenses and see the difference. Create 
+categories to organize your money. View charts for easy insights. Set budgets to keep yourself honest. By connecting your money apps 
+Bajeti serves as a single source of all your money tracking info.
+
+Today's task:
+
+I've been procrastinating this for a long time. Let's just start. I want to:
+
+Lock down the design (thanks Dribble)
+Design the database (thanks ChatGPT)
+Initialize the project (Expo, you rock)
+
+Our stack:
+
+React Native (Expo)
+
+That's all I know for now.
+
+Let's build something.
+
+EOS
+
+That was quick! The app has been initialized. The design has kinda been chosen. The DB structure has kinda been laid out.
+
+Day 2
+
+Let's fully create the first screen. Also let's pull in Realm for the DB and create the first tables. There will be three tables to begin
+with:
+
+Transactions
+Categories
+Sources eg mpesa, bank
+
+This stretched into day 3 because life. The first screen is complete. I have installed a bunch of packages for tailwind, charts and so on.
+My design skills need heavy work but it looks decent.

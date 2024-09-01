@@ -245,7 +245,7 @@ const index = () => {
         renderItem={({ item }) => (
           <View className='flex-row justify-between items-center my-1'>
             <View className='flex-row justify-between items-center'>
-              <Image source={(sampleImages[Math.floor(Math.random() * 4)])} className='w-12 h-12 rounded-full object-cover' />
+              <Image source={(sampleImages[Math.floor(Math.random() * 4)])} className='w-10 h-10 rounded-full object-cover' />
               <View className='flex-col ml-2'>
                 <Text className='text-white text-[16px] font-Poppins'>{categories[item.category_id].name}</Text>
                 <Text className='text-white text-[12px] font-Poppins'>{formatDate(item.created_at)}</Text>
