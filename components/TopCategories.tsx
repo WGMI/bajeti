@@ -25,8 +25,8 @@ const colors = ['bg-[#6034de]', 'bg-[#85d5ed]', 'bg-[#fbfbfb]']
 
 const TopCategories = () => {
     return (
-        <View>
-            <View className='flex-row mb-2'>
+        <View className='mb-5'>
+            <View className='flex-row'>
                 <Text className='text-lg text-white font-PoppinsMedium'>Top </Text>
                 <Text className='text-lg text-white font-PoppinsLight'>Categories</Text>
             </View>
@@ -34,7 +34,7 @@ const TopCategories = () => {
                 data={data}
                 horizontal
                 renderItem={({ item }) => (
-                    <View className={`m-1 w-24 h-24 rounded-lg flex items-center justify-center ${colors[0]}`}>
+                    <View className={`mr-2 mt-1 w-24 h-24 rounded-lg flex items-center justify-center ${colors[0]}`}>
                         <Text className='text-white font-Poppins'>{item.name}</Text>
                         <Text className='text-white font-Poppins'>{item.amount}</Text>
                     </View>

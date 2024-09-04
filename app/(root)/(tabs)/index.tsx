@@ -1,10 +1,14 @@
 import { View, Text, FlatList, Image } from 'react-native'
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
 import { formatDate, formatMoney } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
+import Controls from '@/components/controls';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
+import AddTransaction from '@/components/AddTransaction';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const transactions = [
   {
@@ -209,58 +213,74 @@ const sampleImages = [
 ]
 
 const index = () => {
-  return (
-    <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
-      <View className='flex flex-row justify-between items-center p-5 rounded-lg mt-5 mb-2'>
-        <View className='flex flex-col'>
-          <Text className='text-white  text-lg font-Poppins'>August</Text>
-          <View className='flex-row'>
-            <Text className='text-white text-4xl font-PoppinsMedium'>15000</Text><Text className='text-white text-lg font-Poppins'>.00</Text>
-          </View>
-        </View>
-        <View>
-          <OverviewChart />
-        </View>
-      </View>
-      <View className="flex-row justify-between items-center mb-2">
-        <Text className="flex-1 mr-1 bg-[#009F00] text-white text-center font-PoppinsBold rounded-lg p-2">
-          Income: 50000
-        </Text>
-        <Text className="flex-1 ml-1 bg-[#BD1f29] text-white text-center font-PoppinsBold rounded-lg p-2">
-          Expenses: 35000
-        </Text>
-      </View>
 
-      <FlatList
-        data={transactions}
-        ListHeaderComponent={() => (
+  const [transactionType, setTransactionType] = useState('')
+  const bottomSheetRef = useRef<BottomSheet>(null)
+
+  return (
+    <GestureHandlerRootView>
+      <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
+        <View className='flex flex-row justify-between items-center rounded-lg my-5'>
+          <View className='flex flex-col'>
+            <Text className='text-white text-lg font-Poppins'>August</Text>
+            <View className='flex-row'>
+              <Text className='text-white text-4xl font-PoppinsMedium'>15000</Text><Text className='text-white text-lg font-Poppins'>.00</Text>
+            </View>
+          </View>
           <View>
-            <TopCategories />
-            <View className='flex-row mb-2'>
-              <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
-              <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
-            </View>
+            <OverviewChart />
           </View>
-        )}
-        renderItem={({ item }) => (
-          <View className='flex-row justify-between items-center my-1'>
-            <View className='flex-row justify-between items-center'>
-              <Image source={(sampleImages[Math.floor(Math.random() * 4)])} className='w-10 h-10 rounded-full object-cover' />
-              <View className='flex-col ml-2'>
-                <Text className='text-white text-[16px] font-Poppins'>{categories[item.category_id].name}</Text>
-                <Text className='text-white text-[12px] font-Poppins'>{formatDate(item.created_at)}</Text>
+        </View>
+        <View className="flex-row justify-between items-center mb-5">
+          <Text className="flex-1 mr-1 bg-[#009F00] text-white text-center font-PoppinsBold rounded-lg p-2">
+            Income: 50000
+          </Text>
+          <Text className="flex-1 ml-1 bg-[#BD1f29] text-white text-center font-PoppinsBold rounded-lg p-2">
+            Expenses: 35000
+          </Text>
+        </View>
+
+        <FlatList
+          data={transactions}
+          ListHeaderComponent={() => (
+            <View>
+              <TopCategories />
+              <View className='flex-row'>
+                <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
+                <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
               </View>
             </View>
-            <View className='flex-row justify-between items-center'>
-              <View className='flex-col ml-2'>
-                <Text className='text-white text-2xl font-Poppins'> <MoneyDisplay amount={item.amount} /></Text>
+          )}
+          renderItem={({ item }) => (
+            <View className='flex-row justify-between items-center my-1'>
+              <View className='flex-row justify-between items-center'>
+                <Image source={(sampleImages[Math.floor(Math.random() * 4)])} className='w-10 h-10 rounded-full object-cover' />
+                <View className='flex-col ml-2'>
+                  <Text className='text-white text-[16px] font-Poppins'>{categories[item.category_id].name}</Text>
+                  <Text className='text-white text-[12px] font-Poppins'>{formatDate(item.created_at)}</Text>
+                </View>
+              </View>
+              <View className='flex-row justify-between items-center'>
+                <View className='flex-col ml-2'>
+                  <Text className='text-white text-2xl font-Poppins'> <MoneyDisplay amount={item.amount} /></Text>
+                </View>
               </View>
             </View>
-          </View>
-        )}
-      />
-      <StatusBar style="light" />
-    </SafeAreaView>
+          )}
+        />
+        <Controls
+          onPress={(type:string) => {
+            bottomSheetRef.current?.expand()
+            setTransactionType(type)
+          }}
+        />
+        <BottomSheet ref={bottomSheetRef} snapPoints={['55%', '80%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
+          <BottomSheetView style={{ flex: 1, padding: 10, backgroundColor: '#292929'}}>
+            <AddTransaction transactionType={transactionType} close={() => bottomSheetRef.current?.close()} />
+          </BottomSheetView>
+        </BottomSheet>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   )
 }
 

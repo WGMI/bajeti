@@ -41,4 +41,28 @@ Categories
 Sources eg mpesa, bank
 
 This stretched into day 3 because life. The first screen is complete. I have installed a bunch of packages for tailwind, charts and so on.
-My design skills need heavy work but it looks decent.
+My design skills need heavy work but it looks decent. 
+
+Pic 1
+
+Day 3
+
+Let's get the DB set up. We'll use Realm.
+
+Day 4 
+
+Changed my mind. We'll use SQLite.
+
+Realm uses Native code so if you're using it with expo you need to do a prebuild. I don't want to.
+
+It didn't work. The DB is proving to be a headache.
+
+Day 5
+
+Adventures in setting up a DB continue. The problem with SQLite is that it was updated recently and
+I can't understand the new docs. I have switched to the legacy version. 
+
+Day 6 
+
+The DB is finally set up. I have added the UI for adding transactions. Today we'll do the transaction CRUD.
+
