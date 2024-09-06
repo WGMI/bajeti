@@ -95,6 +95,26 @@ export async function getCategories() {
     });
 }
 
+export async function getCategory(id:number) {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                'SELECT * FROM categories where id = ?',
+                [id],
+                (_, results) => {
+                    resolve(results.rows._array);
+                },
+                (_, error) => {
+                    reject(error);
+                    return true;
+                }
+            );
+        }, (transactionError) => {
+            reject(transactionError);
+        });
+    });
+}
+
 export async function getCategoriesByType(type: string) {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
@@ -185,7 +205,6 @@ export interface Transaction {
 
 // Create a transaction
 export const createTransaction = async (transaction: Transaction): Promise<void> => {
-    console.log('Adding transaction')
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
@@ -386,56 +405,31 @@ export const getTransactionById = async (id: number): Promise<Transaction | null
     });
 };
 
-// Update a transaction by ID
-export const updateTransaction = async (id: number, transaction: Partial<Transaction>): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        const fields: string[] = [];
-        const values: any[] = [];
-
-        if (transaction.category_id !== undefined) {
-            fields.push("category_id = ?");
-            values.push(transaction.category_id);
+export const updateTransaction = (uuid: string, amount: number, description: string, date: string) => {
+    console.log(`UPDATE transactions SET amount = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`)
+    console.log(uuid,amount,description,date)
+    db.transaction(tx => {
+      tx.executeSql(
+        `UPDATE transactions SET amount = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,
+        [amount, description, date, uuid],
+        (_, result) => {
+          console.log('Transaction updated successfully');
+        },
+        (_, error) => {
+          console.log('Error updating transaction:', error);
+          return false;
         }
-        if (transaction.amount !== undefined) {
-            fields.push("amount = ?");
-            values.push(transaction.amount);
-        }
-        if (transaction.description !== undefined) {
-            fields.push("description = ?");
-            values.push(transaction.description);
-        }
-        if (transaction.date !== undefined) {
-            fields.push("date = ?");
-            values.push(transaction.date);
-        }
-        if (transaction.source_id !== undefined) {
-            fields.push("source_id = ?");
-            values.push(transaction.source_id);
-        }
-
-        values.push(id);
-
-        db.transaction(tx => {
-            tx.executeSql(
-                `UPDATE transactions SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-                values,
-                () => resolve(),
-                (_, error) => {
-                    reject(error);
-                    return false;
-                }
-            );
-        });
+      );
     });
-};
+  };
 
 // Delete a transaction by ID
-export const deleteTransaction = async (id: number): Promise<void> => {
+export const deleteTransaction = async (uuid: string): Promise<void> => {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
-                `DELETE FROM transactions WHERE id = ?`,
-                [id],
+                `DELETE FROM transactions WHERE uuid = ?`,
+                [uuid],
                 () => resolve(),
                 (_, error) => {
                     reject(error);

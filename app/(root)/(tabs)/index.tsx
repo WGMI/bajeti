@@ -5,15 +5,17 @@ import OverviewChart from '@/components/OverviewChart'
 import { formatDate, formatMoney } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
 import AddTransaction from '@/components/AddTransaction';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { getCategories, getDataByCategory, getExpenditureByCategory, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
+import { deleteTransaction, getCategories, getDataByCategory, getExpenditureByCategory, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
 import { imageMap } from '@/lib/images';
 import DetailsModal from '@/components/DetailsModal'
+import EditTransaction from '@/components/EditTransaction'
 
 const MoneyDisplay = ({ amount, type }: { amount: number, type: string }) => {
   const [large, small] = formatMoney(amount)
+
   return (
     <View className='flex-row items-end'>
       <Text className='text-xl text-white font-Poppins'>{large}</Text>
@@ -37,16 +39,21 @@ const index = () => {
   const [categoryData, setCategoryData] = useState([])
   const [detailData, setDetailData] = useState(null)
   const [detailVisible, setDetailVisible] = useState(false)
+  const [transactionToEdit, setTransactionToEdit] = useState(null)
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   useEffect(() => {
+    reset()
+  }, [])
+
+  const reset = () => {
     fetchTransactions()
     getUserTotal()
     getCategoryData()
-  }, [])
+  }
 
   const fetchTransactions = async () => {
-    await getTransactions().then((res) => setTransactions(res)).catch((e) => {
+    await getTransactions().then((res) => {console.log(res);setTransactions(res)}).catch((e) => {
       Alert.alert('Error fetching transactions', e)
       console.log(e)
     })
@@ -61,7 +68,7 @@ const index = () => {
     }
     catch (e) {
       console.log(e)
-      Alert.alert('Error',e as string)
+      Alert.alert('Error', e as string)
     }
   }
 
@@ -72,13 +79,38 @@ const index = () => {
     }
     catch (e) {
       console.log(e)
-      Alert.alert('Error',e as string)
+      Alert.alert('Error', e as string)
     }
   }
 
   const reload = (refresh: boolean) => {
     bottomSheetRef.current?.close()
-    if (refresh) fetchTransactions()
+    if (refresh) reset()
+  }
+
+  const handleAction = async (uuid: string, action: string) => {
+    switch (action) {
+      case 'edit':
+        bottomSheetRef.current?.expand()
+        const transaction = transactions.find(item => (item.uuid == uuid))
+        setTransactionToEdit(transaction as any)
+        break;
+      case 'duplicate':
+
+        break;
+      case 'delete':
+        try {
+          deleteTransaction(uuid)
+          reset()
+        }
+        catch (e) {
+          Alert.alert('Error', e as string)
+        }
+        break;
+
+      default:
+        break;
+    }
   }
 
   return (
@@ -117,7 +149,7 @@ const index = () => {
           )}
           keyExtractor={(item) => item.uuid}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => {setDetailData(item); setDetailVisible(true);}}>
+            <TouchableOpacity onPress={() => { setDetailData(item); setDetailVisible(true); }}>
               <View key={item.uuid} className='flex-row justify-between items-center my-1'>
                 <View className='flex-row justify-between items-center'>
                   <Image source={imageMap[item.image]} className='w-10 h-10 rounded-full object-cover' />
@@ -135,7 +167,7 @@ const index = () => {
             </TouchableOpacity>
           )}
         />
-        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => {setDetailData(null);setDetailVisible(false);}}/>
+        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(uuid, action) => handleAction(uuid, action)} />
         <Controls
           onPress={(type: string) => {
             bottomSheetRef.current?.expand()
@@ -143,9 +175,13 @@ const index = () => {
           }}
         />
         <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
-          <BottomSheetView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh)} />
-          </BottomSheetView>
+          <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
+            {transactionToEdit ?
+              <EditTransaction close={(refresh) => reload(refresh)} transaction={transactionToEdit} />
+              :
+              <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh)} transactionToEdit={transactionToEdit} />
+            }
+          </BottomSheetScrollView>
         </BottomSheet>
       </SafeAreaView>
     </GestureHandlerRootView>

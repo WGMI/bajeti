@@ -3,29 +3,47 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Platform, Alert, KeyboardAvoidingView } from 'react-native';
 import CategoryModal from './CategoryModal';
 import { imageMap } from '@/lib/images';
-import { createTransaction, Transaction } from '@/db/db';
+import { createTransaction, getCategory, Transaction, updateTransaction } from '@/db/db';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
+import Transactions from '@/app/(root)/(tabs)/transactions';
 
-const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) => void, transactionType: string }) => {
+const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => void, transaction: Object }) => {
   const initialState = {
-    amount: 0,
+    amount: transaction.amount,
     amountValidation: true,
-    notes: '',
+    notes: transaction.description,
     source: '',
     modalVisible: false,
-    date: new Date(),
+    date: transaction.date,
     show: false,
     selectedCategory: {
-      image: 'default.jpg',
-      name: 'Category',
-      default: true,
+      image:'',
+      name:''
     },
     categoryValidation: true,
   };
 
+  useEffect(() => {
+    console.log(new Date(Date.parse(transaction.date)))
+    getCategoryImage(transaction.category_id)
+  },[])
+
+  const getCategoryImage = async (id:number) => {
+    try {
+      const category = await getCategory(id)
+      setSelectedCategory({
+        id: category[0].id,
+        image: category[0].image,
+        name: category[0].name,
+      })
+    } catch (error) {
+      
+    }
+  }
+
   // Initialize state variables using useState
-  const [amount, setAmount] = useState(initialState.amount);
+  const [amount, setAmount] = useState(initialState.amount.toString());
   const [amountValidation, setAmountValidation] = useState(initialState.amountValidation);
   const [notes, setNotes] = useState(initialState.notes);
   const [source, setSource] = useState(initialState.source);
@@ -58,27 +76,44 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     setShow(true);
   };
 
-  const handleAddTransaction = async () => {
-    if (!amount || !selectedCategory.id) {
-      setAmountValidation(amount);
-      setCategoryValidation(selectedCategory.id);
-      console.log(!selectedCategory.id)
-      return;
-    }
-
+  const handleEditTransaction2 = () => {
+    console.log('',date)
+    
     const transaction: Transaction = {
       uuid: uuid.v4(),
       category_id: selectedCategory.id,
       amount: amount,
       description: notes,
-      date: date.toDateString(),
+      date: date,
+      source_id: 0,
+      created_at: new Date().toDateString(),
+      updated_at: new Date().toDateString(),
+    }
+
+    console.log(transaction)
+    return
+  }
+
+  const handleEditTransaction = async () => {
+    if (!amount || !selectedCategory.id) {
+      setAmountValidation(amount);
+      setCategoryValidation(selectedCategory.id);
+      return;
+    }
+
+    const t: Transaction = {
+      uuid: transaction.uuid,
+      category_id: selectedCategory.id,
+      amount: amount,
+      description: notes,
+      date: date,
       source_id: 0,
       created_at: new Date().toDateString(),
       updated_at: new Date().toDateString(),
     }
 
     try {
-      await createTransaction(transaction);
+      await updateTransaction(t.uuid,Number(t.amount),t.description,t.date);
       resetState();
       close(true);
     } catch (err) {
@@ -95,7 +130,7 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
   return (
     <View className='bg-[#333] flex-1 p-4'>
       <View className='flex-row justify-between items-start my-5'>
-        <Text className='text-white text-xl font-PoppinsBold mb-4 capitalize'>Add {transactionType}</Text>
+        <Text className='text-white text-xl font-PoppinsBold mb-4 capitalize'>Edit {transaction.type}</Text>
         <TouchableOpacity onPress={closeAndReset} className='w-8 h-8 rounded-full bg-red-500 justify-center items-center'>
           <FontAwesome name='close' size={24} color='#fff' />
         </TouchableOpacity>
@@ -103,7 +138,7 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
 
       {/* Amount Input */}
       <Text className='text-white font-Poppins'>Amount</Text>
-      <View className={`flex-row items-center border ${transactionType === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
+      <View className={`flex-row items-center border ${transaction.type === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
         <View className='flex items-center justify-center w-10 h-10 mr-5 rounded-full object-cover'>
           <FontAwesome name='money' size={24} color={'white'} />
         </View>
@@ -118,25 +153,25 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
       </View>
 
       {/* Category Dropdown */}
-      <TouchableOpacity onPress={() => setModalVisible(true)} className={`border ${transactionType === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
+      <TouchableOpacity onPress={() => setModalVisible(true)} className={`border ${transaction.type === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
         <View className='flex-row items-center'>
           <Image source={imageMap[selectedCategory.image]} className='w-10 h-10 mr-5 rounded-full object-cover' />
           <Text className={`text-[16px] font-Poppins ${categoryValidation ? 'text-white' : 'text-red-600'}`}>{selectedCategory.name}</Text>
         </View>
       </TouchableOpacity>
-      <CategoryModal visible={modalVisible} type={transactionType} setCategory={(item) => { setCategoryValidation(true); setSelectedCategory(item); }} onClose={() => setModalVisible(false)} />
+      <CategoryModal visible={modalVisible} type={transaction.type} setCategory={(item) => { setCategoryValidation(true); setSelectedCategory(item); }} onClose={() => setModalVisible(false)} />
 
-      <TouchableOpacity onPress={showDatepicker} className={`border ${transactionType === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
+      <TouchableOpacity onPress={showDatepicker} className={`border ${transaction.type === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
         <View className='flex-row items-center'>
           <View className='flex items-center justify-center w-10 h-10 mr-5 rounded-full object-cover'>
             <FontAwesome name='calendar' size={24} color={'white'} />
           </View>
-          <Text className='text-white text-[16px] font-Poppins'>{date.toDateString()}</Text>
+          <Text className='text-white text-[16px] font-Poppins'>{initialState.date}</Text>
         </View>
       </TouchableOpacity>
       {show && (
         <DateTimePicker
-          value={date}
+          value={new Date(Date.parse(transaction.date))}
           mode="date"
           display="default"
           themeVariant='dark'
@@ -147,7 +182,7 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
       {/* Notes Input */}
       <Text className='text-white font-Poppins'>Notes</Text>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View className={`flex-row items-center border ${transactionType === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
+        <View className={`flex-row items-center border ${transaction.type === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
           <TextInput
             className={`flex-1 text-white font-Poppins`}
             value={notes}
@@ -175,12 +210,12 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
       {/* Submit Button */}
       <TouchableOpacity
         className='bg-blue-500 rounded-md p-2'
-        onPress={handleAddTransaction}
+        onPress={handleEditTransaction}
       >
-        <Text className='text-white text-center'>Add Transaction</Text>
+        <Text className='text-white text-center'>Edit Transaction</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default AddTransaction;
+export default EditTransaction;

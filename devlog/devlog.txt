@@ -84,4 +84,6 @@ Day 8
 
 Yesterday was quite productive. I hooked up the entire first page UI. Now...for the third time, let's finish the transaction CRUD
 
+KPLC did that thing.
+
 

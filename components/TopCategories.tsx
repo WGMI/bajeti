@@ -5,6 +5,7 @@ import { FlatList } from 'react-native'
 const colors = ['bg-[#6034de]', 'bg-[#85d5ed]', 'bg-[#fbfbfb]']
 
 const TopCategories = ({categoryData}:{categoryData:any[]}) => {
+    if((categoryData.length) == 0) return
     return (
         <View className='mb-5'>
             <View className='flex-row'>
