@@ -2,13 +2,15 @@ import { PieChart } from "react-native-gifted-charts";
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const OverviewChart = () => {
+const OverviewChart = ({ income, expenses }: { income: number, expenses: number }) => {
 
     const pieData = [
-        { value: 47, color: '#009F00', gradientCenterColor: '#006D00', focused: true, },
-        { value: 53, color: '#BD1f29', gradientCenterColor: '#8F80F3' }
+        { value: income, color: '#009F00', gradientCenterColor: '#006D00', focused: true, },
+        { value: expenses, color: '#BD1f29', gradientCenterColor: '#8F80F3' }
     ]
-    
+
+    const percentage = Math.floor((income / (income + expenses)) * 100)
+
     return (
         <PieChart
             data={pieData}
@@ -16,11 +18,13 @@ const OverviewChart = () => {
             showGradient
             semiCircle
             sectionAutoFocus
-            innerCircleColor={'#000'}
+            innerCircleColor={'#292929'}
+            animationDuration={1500}  
+            animateOnDataChange
             focusOnPress
             radius={60}
             innerRadius={40}
-            centerLabelComponent={() => <Text className="text-white font-PoppinsBold">47%</Text>}
+            //centerLabelComponent={() => <Text className="text-white font-PoppinsBold">{percentage}%</Text>}
         />
     )
 }

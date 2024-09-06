@@ -66,3 +66,22 @@ Day 6
 
 The DB is finally set up. I have added the UI for adding transactions. Today we'll do the transaction CRUD.
 
+Transactions can now be added. Yay!
+Transactions can now be listed. Yay!
+I need data validation, though. Also, there's an insertion bug.
+
+Day 7
+
+Today we finish the transaction CRUD and we deal with the bug from yesterday.
+
+First off, this 90 minute idea of mine was a hoax. Secondly, the SQLite DB was such
+a headache today. It kept repeating ids! ChatGPT is convinced that everything is fine
+with the setup but still. I ended up adding a uuid to the table as a backup.
+
+Anyway, I need to continue with the CRUD.
+
+Day 8
+
+Yesterday was quite productive. I hooked up the entire first page UI. Now...for the third time, let's finish the transaction CRUD
+
+
