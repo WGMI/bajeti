@@ -95,7 +95,7 @@ export async function getCategories() {
     });
 }
 
-export async function getCategory(id:number) {
+export async function getCategory(id: number) {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
@@ -221,6 +221,22 @@ export const createTransaction = async (transaction: Transaction): Promise<void>
 };
 
 // Read all transactions
+export const getSevenDaysTransactions = async (): Promise<Transaction[]> => {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                `SELECT * from transactions t join categories c on t.category_id = c.id WHERE date BETWEEN DATE('now', '-7 days') AND DATE('now')`,
+                [],
+                (_, { rows: { _array } }) => resolve(_array),
+                (_, error) => {
+                    reject(error);
+                    return false;
+                }
+            );
+        });
+    });
+};
+
 export const getTransactions = async (): Promise<Transaction[]> => {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
@@ -237,15 +253,9 @@ export const getTransactions = async (): Promise<Transaction[]> => {
     });
 };
 
-export const getTotalIncome = (): Promise<number> => {
+export const getTotalIncome = (month: boolean): Promise<number> => {
     return new Promise((resolve, reject) => {
-        const query = `
-        SELECT COALESCE(SUM(t.amount), 0) AS total_income
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        WHERE c.type = 'income';
-      `;
-
+        const query = `SELECT COALESCE(SUM(t.amount), 0) AS total_income FROM transactions t JOIN categories c ON t.category_id = c.id WHERE c.type = 'income' ${ month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};`;
         db.transaction((tx) => {
             tx.executeSql(
                 query,
@@ -264,13 +274,13 @@ export const getTotalIncome = (): Promise<number> => {
     });
 };
 
-export const getTotalExpenses = (): Promise<number> => {
+export const getTotalExpenses = (month: boolean): Promise<number> => {
     return new Promise((resolve, reject) => {
         const query = `
         SELECT COALESCE(SUM(t.amount), 0) AS total_expenses
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE c.type = 'expense';
+        WHERE c.type = 'expense' ${ month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};
       `;
 
         db.transaction((tx) => {
@@ -405,23 +415,21 @@ export const getTransactionById = async (id: number): Promise<Transaction | null
     });
 };
 
-export const updateTransaction = (uuid: string, amount: number, description: string, date: string) => {
-    console.log(`UPDATE transactions SET amount = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`)
-    console.log(uuid,amount,description,date)
+export const updateTransaction = (uuid: string, amount: number, category_id: number, description: string, date: string) => {
     db.transaction(tx => {
-      tx.executeSql(
-        `UPDATE transactions SET amount = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,
-        [amount, description, date, uuid],
-        (_, result) => {
-          console.log('Transaction updated successfully');
-        },
-        (_, error) => {
-          console.log('Error updating transaction:', error);
-          return false;
-        }
-      );
+        tx.executeSql(
+            `UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,
+            [amount, category_id, description, date, uuid],
+            (_, result) => {
+                console.log('Transaction updated successfully');
+            },
+            (_, error) => {
+                console.log('Error updating transaction:', error);
+                return false;
+            }
+        );
     });
-  };
+};
 
 // Delete a transaction by ID
 export const deleteTransaction = async (uuid: string): Promise<void> => {

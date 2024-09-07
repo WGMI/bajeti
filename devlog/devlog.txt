@@ -86,4 +86,11 @@ Yesterday was quite productive. I hooked up the entire first page UI. Now...for 
 
 KPLC did that thing.
 
+Day 9
+
+A very productive Saturday morning. The home screen is showing a summary of the last 7 days. Next, the transaction list should
+show a grouped list of spending and earning.
+
+
+
 

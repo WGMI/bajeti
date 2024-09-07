@@ -98,6 +98,7 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
     if (!amount || !selectedCategory.id) {
       setAmountValidation(amount);
       setCategoryValidation(selectedCategory.id);
+      console.log('here')
       return;
     }
 
@@ -113,7 +114,7 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
     }
 
     try {
-      await updateTransaction(t.uuid,Number(t.amount),t.description,t.date);
+      await updateTransaction(t.uuid,Number(t.amount),t.category_id,t.description,t.date);
       resetState();
       close(true);
     } catch (err) {

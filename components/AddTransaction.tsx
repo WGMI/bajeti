@@ -62,7 +62,6 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     if (!amount || !selectedCategory.id) {
       setAmountValidation(amount);
       setCategoryValidation(selectedCategory.id);
-      console.log(!selectedCategory.id)
       return;
     }
 
@@ -71,7 +70,7 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
       category_id: selectedCategory.id,
       amount: amount,
       description: notes,
-      date: date.toDateString(),
+      date: date.toISOString().split('T')[0],
       source_id: 0,
       created_at: new Date().toDateString(),
       updated_at: new Date().toDateString(),

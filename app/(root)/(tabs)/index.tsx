@@ -8,24 +8,23 @@ import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
 import AddTransaction from '@/components/AddTransaction';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { deleteTransaction, getCategories, getDataByCategory, getExpenditureByCategory, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
+import { deleteTransaction, getCategories, getDataByCategory, getExpenditureByCategory, getSevenDaysTransactions, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
 import { imageMap } from '@/lib/images';
 import DetailsModal from '@/components/DetailsModal'
 import EditTransaction from '@/components/EditTransaction'
 
-const MoneyDisplay = ({ amount, type }: { amount: number, type: string }) => {
+const MoneyDisplay = ({ amount, type, textSize }: { amount: number, type?: string, textSize?: string }) => {
   const [large, small] = formatMoney(amount)
-
   return (
-    <View className='flex-row items-end'>
-      <Text className='text-xl text-white font-Poppins'>{large}</Text>
+    <View className={`flex-row ${textSize ? '' : 'items-end'}`}>
+      <Text className={`${textSize ? textSize : 'text-lg'} text-white font-Poppins`}>{large}</Text>
       {
         (small !== '00') ?
-          <Text className='text-sm text-white font-Poppins'>.{small}</Text>
+          <Text className={`${textSize ? 'text-lg' : 'text-sm'} text-white font-Poppins`}>.{small}</Text>
           :
           <></>
       }
-      <View className={`ml-1 w-1 h-full ${type! == 'income' ? 'bg-[#009F00]' : 'bg-[#BD1f29]'}`} />
+      {type ? <View className={`ml-1 w-1 h-full ${type! == 'income' ? 'bg-[#009F00]' : 'bg-[#BD1f29]'}`} /> : <></>}
     </View>
   )
 }
@@ -36,6 +35,8 @@ const index = () => {
   const [transactions, setTransactions] = useState([])
   const [income, setIncome] = useState(0)
   const [expenses, setExpenses] = useState(0)
+  const [monthIncome, setMonthIncome] = useState(0)
+  const [monthExpenses, setMonthExpenses] = useState(0)
   const [categoryData, setCategoryData] = useState([])
   const [detailData, setDetailData] = useState(null)
   const [detailVisible, setDetailVisible] = useState(false)
@@ -43,26 +44,48 @@ const index = () => {
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   useEffect(() => {
+    fetchTransactions()
     reset()
   }, [])
 
   const reset = () => {
-    fetchTransactions()
-    getUserTotal()
+    fetchWeekTransactions()
+    getUserMonthTotal()
     getCategoryData()
+    getUserTotal()
   }
 
-  const fetchTransactions = async () => {
-    await getTransactions().then((res) => {console.log(res);setTransactions(res)}).catch((e) => {
+  const fetchWeekTransactions = async () => {
+    await getSevenDaysTransactions().then((res) => setTransactions(res)).catch((e) => {
       Alert.alert('Error fetching transactions', e)
       console.log(e)
     })
   }
 
+  const fetchTransactions = async () => {
+    await getTransactions().then((res) => console.log(res)).catch((e) => {
+      Alert.alert('Error fetching transactions', e)
+      console.log(e)
+    })
+  }
+
+  const getUserMonthTotal = async () => {
+    try {
+      const income = await getTotalIncome(true)
+      const expenses = await getTotalExpenses(true)
+      setMonthIncome(income)
+      setMonthExpenses(expenses)
+    }
+    catch (e) {
+      console.log(e)
+      Alert.alert('Error', e as string)
+    }
+  }
+
   const getUserTotal = async () => {
     try {
-      const income = await getTotalIncome()
-      const expenses = await getTotalExpenses()
+      const income = await getTotalIncome(false)
+      const expenses = await getTotalExpenses(false)
       setIncome(income)
       setExpenses(expenses)
     }
@@ -96,7 +119,7 @@ const index = () => {
         setTransactionToEdit(transaction as any)
         break;
       case 'duplicate':
-
+        //Later
         break;
       case 'delete':
         try {
@@ -118,21 +141,26 @@ const index = () => {
       <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
         <View className='flex flex-row justify-between items-center rounded-lg my-5'>
           <View className='flex flex-col'>
-            <Text className='text-white text-lg font-Poppins'>August</Text>
+            <Text className='text-white text-lg font-Poppins'>{new Date().toLocaleString('default', { month: 'long' })}</Text>
             <View className='flex-row'>
-              <Text className='text-white text-4xl font-PoppinsMedium'>{income - expenses}</Text><Text className='text-white text-lg font-Poppins'>.00</Text>
+              <MoneyDisplay amount={monthIncome - monthExpenses} textSize={'text-4xl'} />
             </View>
           </View>
           <View>
-            <OverviewChart income={income} expenses={expenses} />
+            <OverviewChart income={monthIncome} expenses={monthExpenses} />
           </View>
         </View>
         <View className="flex-row justify-between items-center mb-5">
           <Text className="flex-1 mr-1 bg-[#009F00] text-white text-center font-PoppinsBold rounded-lg p-2">
-            Income: {income}
+            Income: {monthIncome}
           </Text>
           <Text className="flex-1 ml-1 bg-[#BD1f29] text-white text-center font-PoppinsBold rounded-lg p-2">
-            Expenses: {expenses}
+            Expenses: {monthExpenses}
+          </Text>
+        </View>
+        <View className="flex-row justify-between items-center mb-5">
+          <Text className="flex-1 mr-1 border border-[#85d5ed]  text-white text-center font-PoppinsBold rounded-lg p-2">
+            Wallet: {income - expenses}
           </Text>
         </View>
 
@@ -177,7 +205,7 @@ const index = () => {
         <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
           <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
             {transactionToEdit ?
-              <EditTransaction close={(refresh) => reload(refresh)} transaction={transactionToEdit} />
+              <EditTransaction close={(refresh) =>{ reload(refresh); setTransactionToEdit(null)}} transaction={transactionToEdit} />
               :
               <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh)} transactionToEdit={transactionToEdit} />
             }

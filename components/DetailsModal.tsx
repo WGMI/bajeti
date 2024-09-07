@@ -37,12 +37,12 @@ const DetailsModal = ({ transaction, visible, onClose, action }: { transaction: 
                         }} className='bg-white p-2 rounded-full'>
                             <FontAwesome name="edit" size={24} color="#6034de" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
+                        {/* <TouchableOpacity onPress={() => {
                             onClose();
                             action(data.uuid,'duplicate')
                         }} className='bg-white p-2 rounded-full'>
                             <FontAwesome name="clone" size={24} color="#6034de" />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <TouchableOpacity onPress={() => {
                             onClose();
                             action(data.uuid,'delete')

@@ -13,7 +13,7 @@ const TopCategories = ({categoryData}:{categoryData:any[]}) => {
                 <Text className='text-lg text-white font-PoppinsLight'>Categories</Text>
             </View>
             <FlatList
-                data={categoryData}
+                data={categoryData.slice(0,5)}
                 horizontal
                 renderItem={({ item }) => (
                     <View className={`mr-2 mt-1 w-24 h-24 rounded-lg flex items-center justify-center ${colors[0]}`}>
