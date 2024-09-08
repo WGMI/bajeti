@@ -7,6 +7,7 @@ import { createTransaction, getCategory, Transaction, updateTransaction } from '
 import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
 import Transactions from '@/app/(root)/(tabs)/transactions';
+import { formatDate } from '@/lib/helpers';
 
 const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => void, transaction: Object }) => {
   const initialState = {
@@ -25,7 +26,6 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
   };
 
   useEffect(() => {
-    console.log(new Date(Date.parse(transaction.date)))
     getCategoryImage(transaction.category_id)
   },[])
 
@@ -67,38 +67,19 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
   };
 
   const onDateChange = (event: any, selectedDate: Date | undefined) => {
-    const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
-    setDate(currentDate);
+    console.log(selectedDate)
+    setDate(selectedDate);
   };
 
   const showDatepicker = () => {
     setShow(true);
   };
 
-  const handleEditTransaction2 = () => {
-    console.log('',date)
-    
-    const transaction: Transaction = {
-      uuid: uuid.v4(),
-      category_id: selectedCategory.id,
-      amount: amount,
-      description: notes,
-      date: date,
-      source_id: 0,
-      created_at: new Date().toDateString(),
-      updated_at: new Date().toDateString(),
-    }
-
-    console.log(transaction)
-    return
-  }
-
   const handleEditTransaction = async () => {
     if (!amount || !selectedCategory.id) {
       setAmountValidation(amount);
       setCategoryValidation(selectedCategory.id);
-      console.log('here')
       return;
     }
 
@@ -107,11 +88,13 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
       category_id: selectedCategory.id,
       amount: amount,
       description: notes,
-      date: date,
+      date: date.toISOString().split('T')[0],
       source_id: 0,
       created_at: new Date().toDateString(),
       updated_at: new Date().toDateString(),
     }
+
+    console.log(t)
 
     try {
       await updateTransaction(t.uuid,Number(t.amount),t.category_id,t.description,t.date);
@@ -167,7 +150,7 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
           <View className='flex items-center justify-center w-10 h-10 mr-5 rounded-full object-cover'>
             <FontAwesome name='calendar' size={24} color={'white'} />
           </View>
-          <Text className='text-white text-[16px] font-Poppins'>{initialState.date}</Text>
+          <Text className='text-white text-[16px] font-Poppins'>{formatDate(initialState.date)}</Text>
         </View>
       </TouchableOpacity>
       {show && (

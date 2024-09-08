@@ -205,6 +205,8 @@ export interface Transaction {
 
 // Create a transaction
 export const createTransaction = async (transaction: Transaction): Promise<void> => {
+    console.log(`INSERT INTO transactions (uuid, category_id, amount, description, date, source_id) VALUES (?, ?, ?, ?, ?, ?)`)
+    console.log([transaction.uuid, transaction.category_id, transaction.amount, transaction.description || null, transaction.date, transaction.source_id || null])
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
@@ -225,7 +227,7 @@ export const getSevenDaysTransactions = async (): Promise<Transaction[]> => {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
-                `SELECT * from transactions t join categories c on t.category_id = c.id WHERE date BETWEEN DATE('now', '-7 days') AND DATE('now')`,
+                `SELECT * from transactions t join categories c on t.category_id = c.id WHERE date BETWEEN DATE('now', '-7 days') AND DATE('now') ORDER BY date, created_at DESC`,
                 [],
                 (_, { rows: { _array } }) => resolve(_array),
                 (_, error) => {
@@ -241,7 +243,7 @@ export const getTransactions = async (): Promise<Transaction[]> => {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
-                `SELECT * from transactions t join categories c on t.category_id = c.id`,
+                `SELECT * from transactions t join categories c on t.category_id = c.id ORDER BY date desc`,
                 [],
                 (_, { rows: { _array } }) => resolve(_array),
                 (_, error) => {
@@ -416,6 +418,9 @@ export const getTransactionById = async (id: number): Promise<Transaction | null
 };
 
 export const updateTransaction = (uuid: string, amount: number, category_id: number, description: string, date: string) => {
+    console.log(`UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`)
+    console.log([amount, category_id, description, date, uuid])
+            
     db.transaction(tx => {
         tx.executeSql(
             `UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,

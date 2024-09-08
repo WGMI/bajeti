@@ -1,190 +1,110 @@
-import { View, Text, FlatList, Image, Alert, TouchableOpacity } from 'react-native'
+import { View, Text, TouchableOpacity, Image, Alert, SectionList } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
+import { getTransactions } from '@/db/db'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import OverviewChart from '@/components/OverviewChart'
-import { formatDate, formatMoney } from '@/lib/helpers'
-import TopCategories from '@/components/TopCategories'
-import Controls from '@/components/controls';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
-import AddTransaction from '@/components/AddTransaction';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { deleteTransaction, getCategories, getDataByCategory, getExpenditureByCategory, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
-import { imageMap } from '@/lib/images';
+import { FlatList } from 'react-native-gesture-handler'
+import { imageMap } from '@/lib/images'
+import { formatDate, handleAction, reload } from '@/lib/helpers'
+import { MoneyDisplay } from '@/components/MoneyDisplay'
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import DetailsModal from '@/components/DetailsModal'
+import Controls from '@/components/controls'
 import EditTransaction from '@/components/EditTransaction'
-
-const MoneyDisplay = ({ amount, type }: { amount: number, type: string }) => {
-  const [large, small] = formatMoney(amount)
-
-  return (
-    <View className='flex-row items-end'>
-      <Text className='text-xl text-white font-Poppins'>{large}</Text>
-      {
-        (small !== '00') ?
-          <Text className='text-sm text-white font-Poppins'>.{small}</Text>
-          :
-          <></>
-      }
-      <View className={`ml-1 w-1 h-full ${type! == 'income' ? 'bg-[#009F00]' : 'bg-[#BD1f29]'}`} />
-    </View>
-  )
-}
+import AddTransaction from '@/components/AddTransaction'
+import { FontAwesome } from '@expo/vector-icons'
+import { SingleTransaction } from '@/components/SingleTransaction'
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 
 const Transactions = () => {
-
-  const [transactionType, setTransactionType] = useState('')
   const [transactions, setTransactions] = useState([])
-  const [income, setIncome] = useState(0)
-  const [expenses, setExpenses] = useState(0)
-  const [categoryData, setCategoryData] = useState([])
+  const [transactionType, setTransactionType] = useState('')
   const [detailData, setDetailData] = useState(null)
   const [detailVisible, setDetailVisible] = useState(false)
   const [transactionToEdit, setTransactionToEdit] = useState(null)
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   useEffect(() => {
-    reset()
+    getTransactionData()
   }, [])
 
-  const reset = () => {
-    fetchTransactions()
-    getUserTotal()
-    getCategoryData()
-  }
-
-  const fetchTransactions = async () => {
-    await getTransactions().then((res) => {console.log(res);setTransactions(res)}).catch((e) => {
-      Alert.alert('Error fetching transactions', e)
-      console.log(e)
-    })
-  }
-
-  const getUserTotal = async () => {
+  const getTransactionData = async () => {
     try {
-      const income = await getTotalIncome()
-      const expenses = await getTotalExpenses()
-      setIncome(income)
-      setExpenses(expenses)
-    }
-    catch (e) {
-      console.log(e)
-      Alert.alert('Error', e as string)
+      const transactions = await getTransactions()
+      setTransactions(groupTransactionsByMonth(transactions))
+    } catch (error) {
+      console.log(error)
     }
   }
 
-  const getCategoryData = async () => {
-    try {
-      const categoryData = await getDataByCategory()
-      setCategoryData(categoryData as any)
-    }
-    catch (e) {
-      console.log(e)
-      Alert.alert('Error', e as string)
-    }
-  }
+  const groupTransactionsByMonth = (transactions) => {
+    // Helper function to format date as "Month YYYY"
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      const options = { year: 'numeric', month: 'long' };
+      return date.toLocaleDateString('en-US', options);
+    };
 
-  const reload = (refresh: boolean) => {
-    bottomSheetRef.current?.close()
-    if (refresh) reset()
-  }
+    // Grouping transactions by formatted month-year
+    const groupedTransactions = transactions.reduce((acc, transaction) => {
+      const dateKey = formatDate(transaction.date || transaction.created_at);
 
-  const handleAction = async (uuid: string, action: string) => {
-    switch (action) {
-      case 'edit':
-        bottomSheetRef.current?.expand()
-        const transaction = transactions.find(item => (item.uuid == uuid))
-        setTransactionToEdit(transaction as any)
-        break;
-      case 'duplicate':
-        //Later
-        break;
-      case 'delete':
-        try {
-          deleteTransaction(uuid)
-          reset()
-        }
-        catch (e) {
-          Alert.alert('Error', e as string)
-        }
-        break;
+      // If the group for the current month-year doesn't exist, create it
+      if (!acc[dateKey]) acc[dateKey] = [];
 
-      default:
-        break;
-    }
-  }
+      // Push the current transaction to the relevant group
+      acc[dateKey].push(transaction);
+
+      return acc;
+    }, {});
+
+    // Convert the grouped transactions into the desired format
+    return Object.entries(groupedTransactions).map(([title, data]) => ({
+      title,
+      data
+    }));
+  };
 
   return (
-    <GestureHandlerRootView>
-      <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
-        <View className='flex flex-row justify-between items-center rounded-lg my-5'>
-          <View className='flex flex-col'>
-            <Text className='text-white text-lg font-Poppins'>August</Text>
-            <View className='flex-row'>
-              <Text className='text-white text-4xl font-PoppinsMedium'>{income - expenses}</Text><Text className='text-white text-lg font-Poppins'>.00</Text>
-            </View>
-          </View>
-          <View>
-            <OverviewChart income={income} expenses={expenses} />
-          </View>
+    <SafeAreaView className='flex flex-1 bg-[#292929]'>
+      <View>
+        <View className='flex-row justify-between items-center bg-[#6034de] p-3 mb-2'>
+          <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
+          <TouchableOpacity>
+            <FontAwesome name='search' color={'white'} size={24} />
+          </TouchableOpacity>
         </View>
-        <View className="flex-row justify-between items-center mb-5">
-          <Text className="flex-1 mr-1 bg-[#009F00] text-white text-center font-PoppinsBold rounded-lg p-2">
-            Income: {income}
-          </Text>
-          <Text className="flex-1 ml-1 bg-[#BD1f29] text-white text-center font-PoppinsBold rounded-lg p-2">
-            Expenses: {expenses}
-          </Text>
-        </View>
-
-        <FlatList
-          data={transactions}
-          ListHeaderComponent={() => (
-            <View>
-              <TopCategories categoryData={categoryData} />
-              <View className='flex-row'>
-                <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
-                <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
-              </View>
-            </View>
-          )}
+        <SectionList
+          sections={transactions}
           keyExtractor={(item) => item.uuid}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => { setDetailData(item); setDetailVisible(true); }}>
-              <View key={item.uuid} className='flex-row justify-between items-center my-1'>
-                <View className='flex-row justify-between items-center'>
-                  <Image source={imageMap[item.image]} className='w-10 h-10 rounded-full object-cover' />
-                  <View className='flex-col ml-2'>
-                    <Text className='text-white text-[16px] font-Poppins'>{item.name}</Text>
-                    <Text className='text-white text-[12px] font-Poppins'>{formatDate(item.date)}</Text>
-                  </View>
-                </View>
-                <View className='flex-row justify-between items-center'>
-                  <View className='flex-col ml-2'>
-                    <MoneyDisplay amount={item.amount} type={item.type} />
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
+            <View className='mx-2'>
+              <SingleTransaction item={item} onPress={() => { setDetailData(item); setDetailVisible(true); }} />
+            </View>
+          )}
+          renderSectionHeader={({ section: { title } }) => (
+            <View className='flex items-center justify-center bg-[#575757] p-3'>
+              <Text className='text-white font-PoppinsBold'>{title}</Text>
+            </View>
           )}
         />
-        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(uuid, action) => handleAction(uuid, action)} />
-        <Controls
-          onPress={(type: string) => {
-            bottomSheetRef.current?.expand()
-            setTransactionType(type)
-          }}
-        />
-        <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
-          <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
-            {transactionToEdit ?
-              <EditTransaction close={(refresh) => reload(refresh)} transaction={transactionToEdit} />
-              :
-              <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh)} transactionToEdit={transactionToEdit} />
-            }
-          </BottomSheetScrollView>
-        </BottomSheet>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+      </View>
+      <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, getTransactionData)} />
+      <Controls
+        onPress={(type: string) => {
+          bottomSheetRef.current?.expand()
+          setTransactionType(type)
+        }}
+      />
+      <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
+        <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
+          {transactionToEdit ?
+            <EditTransaction close={(refresh) => { reload(refresh,bottomSheetRef,getTransactionData); setTransactionToEdit(null) }} transaction={transactionToEdit} />
+            :
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh,bottomSheetRef,getTransactionData)} />
+          }
+        </BottomSheetScrollView>
+      </BottomSheet>
+    </SafeAreaView>
   )
 }
 

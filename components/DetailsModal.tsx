@@ -3,8 +3,9 @@ import { Modal, View, Text, Image, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { imageMap } from '@/lib/images';
 
-const DetailsModal = ({ transaction, visible, onClose, action }: { transaction: Object, visible: boolean, onClose: () => void, action: (uuid:string, action:string) => void }) => {
+const DetailsModal = ({ transaction, visible, onClose, action }: { transaction: Object, visible: boolean, onClose: () => void, action: (transaction:Object, action:string) => void }) => {
     const data = transaction
+    
     if (!transaction) return
     return (
         <Modal visible={visible} transparent={true} animationType="slide">
@@ -33,7 +34,7 @@ const DetailsModal = ({ transaction, visible, onClose, action }: { transaction: 
                     <View className="flex-row justify-around mt-4">
                         <TouchableOpacity onPress={() => {
                             onClose();
-                            action(data.uuid,'edit')
+                            action(data,'edit')
                         }} className='bg-white p-2 rounded-full'>
                             <FontAwesome name="edit" size={24} color="#6034de" />
                         </TouchableOpacity>
@@ -45,7 +46,7 @@ const DetailsModal = ({ transaction, visible, onClose, action }: { transaction: 
                         </TouchableOpacity> */}
                         <TouchableOpacity onPress={() => {
                             onClose();
-                            action(data.uuid,'delete')
+                            action(data,'delete')
                         }} className='bg-white p-2 rounded-full'>
                             <FontAwesome name="trash" size={24} color="#6034de" />
                         </TouchableOpacity>

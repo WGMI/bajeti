@@ -1,12 +1,12 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { getTransactions } from '@/db/db';
+import React, { useEffect, useState } from 'react';
+import { View, Text, SectionList, StyleSheet } from 'react-native';
 
-const Summary = () => {
+const Summary = () => {  
+
   return (
-    <View>
-      <Text>Summary</Text>
-    </View>
-  )
-}
+    <View></View>
+  );
+};
 
-export default Summary
+export default Summary;

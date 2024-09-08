@@ -91,6 +91,11 @@ Day 9
 A very productive Saturday morning. The home screen is showing a summary of the last 7 days. Next, the transaction list should
 show a grouped list of spending and earning.
 
+The transaction page is mostly done. It has a lot of bugs, though. I want all pages to have the floating add transaction button
+and on the transaction page the add transaction function breaks the app.
 
+Day 10
+
+Fixing the transaction page takes priority then the summary page then we're done.
 
 

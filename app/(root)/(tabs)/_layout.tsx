@@ -7,7 +7,7 @@ import { FontAwesome } from '@expo/vector-icons'; // Replace with your desired l
 const TabIcon = ({ focused, icon, label }: { focused: boolean, icon: string, label: string }) => (
     <View className={`flex flex-row justify-center items-center rounded-full ${focused ? 'bg-general-300' : ''}`}>
         <View className={`w-12 h-12 justify-center items-center rounded-full ${focused ? 'bg-general-400' : ''}`}>
-            <FontAwesome name={icon} size={18} color={focused ? '#32de32' : 'white'} />
+            <FontAwesome name={icon} size={18} color={focused ? '#85d5ed' : 'white'} />
             {/* <Text className='text-[9px] text-white capitalize font-PoppinsBold'>{label}</Text> */}
         </View>
     </View>
