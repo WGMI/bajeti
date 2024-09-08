@@ -6,7 +6,11 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
   const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchCategories(type);
+    if(type == 'all'){
+      fetchAllCategories()
+    } else{
+      fetchCategories(type);
+    }
   }, [type]);
 
   const fetchCategories = async (categoryType:string) => {
@@ -18,6 +22,16 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
       console.log('Error fetching categories:', error);
       Alert.alert('Error', 'Failed to fetch categories');
     })
+  };
+
+  const fetchAllCategories = async () => {
+    try {
+      const allcategories = await getCategories()
+      setCategories(allcategories as any[])
+    } catch (error) {
+      console.log('Error fetching categories:', error);
+      Alert.alert('Error', 'Failed to fetch categories');
+    }
   };
 
   const selectCategory = (item:Object) => {
@@ -44,7 +58,7 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
           />
           
           {/* Footer */}
-          <View className='mt-4'>
+          {type == 'all' ? <></> : <View className='mt-4'>
             <TouchableOpacity 
               className='bg-blue-500 p-3 rounded-md mb-2'
               onPress={() => console.log('Add New Category')}
@@ -59,7 +73,7 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
             >
               <Text className='text-white text-center'>Close</Text>
             </TouchableOpacity>
-          </View>
+          </View>}
         </View>
       </View>
     </Modal>
