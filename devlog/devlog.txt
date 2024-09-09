@@ -101,4 +101,7 @@ Fixing the transaction page takes priority then the summary page then we're done
 The page is fixed. Also, in the process I found bugs in the home screen and fixed them. On top of that, I moved some functions
 that were duplicated in the two screens into a helper file to keep DRY.
 
+Day 11
+
+Home stretch. The summary page is next. I'm skipping the search function on the transaction page for now.
 

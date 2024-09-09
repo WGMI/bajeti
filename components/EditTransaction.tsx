@@ -88,13 +88,11 @@ const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => 
       category_id: selectedCategory.id,
       amount: amount,
       description: notes,
-      date: date.toISOString().split('T')[0],
+      date: typeof(date) == 'string' ? new Date(date).toISOString().split('T')[0] : date.toISOString().split('T')[0],
       source_id: 0,
       created_at: new Date().toDateString(),
       updated_at: new Date().toDateString(),
     }
-
-    console.log(t)
 
     try {
       await updateTransaction(t.uuid,Number(t.amount),t.category_id,t.description,t.date);

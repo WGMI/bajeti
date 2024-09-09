@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, Alert, SectionList } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { getTransactions } from '@/db/db'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { FlatList, TextInput } from 'react-native-gesture-handler'
@@ -16,6 +16,7 @@ import { SingleTransaction } from '@/components/SingleTransaction'
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import CategoryModal from '@/components/CategoryModal'
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from 'expo-router'
 
 const Transactions = () => {
   const [rawtransactions, setRawtransactions] = useState([])
@@ -35,9 +36,12 @@ const Transactions = () => {
   const bottomSheetRef = useRef<BottomSheet>(null)
   const [modalVisible, setModalVisible] = useState(false);
 
-  useEffect(() => {
-    getTransactionData()
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      getTransactionData()
+    }, [])
+  );
+
 
   const opensearch = () => {
     setSearchVisible(true)
@@ -49,25 +53,29 @@ const Transactions = () => {
     setStartDate('')
     setToDate('')
     setSearchNotes('')
+    setTransactions(groupTransactionsByMonth(rawtransactions))
   }
 
   const search = () => {
-    console.log(searchCategory, startDate, toDate, searchNotes);
+    if (searchCategory == '' && startDate == '' && toDate == '' && searchNotes == '') {
+      Alert.alert('Error', 'Please enter at least one search parameter')
+      return
+    }
 
-    const filteredTransactions = transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date || transaction.created_at);
+    const filteredTransactions: any = rawtransactions.filter((transaction) => {
+      const categoryMatch = searchCategory ? transaction.name === searchCategory : true;
+      
+      // Handle null or undefined description
+      const description = transaction.description ? transaction.description.toLowerCase() : '';
+      const notesMatch = searchNotes ? description.includes(searchNotes.toLowerCase()) : true;
+
       const start = startDate ? new Date(startDate) : null;
       const end = toDate ? new Date(toDate) : null;
 
-      // Category match
-      const categoryMatch = searchCategory ? transaction.category === searchCategory : true;
+      console.log(start,end)
 
-      // Date match
-      const dateMatch = (!start || transactionDate >= start) && (!end || transactionDate <= end);
-
-      // Notes match
-      const notesMatch = searchNotes ? transaction.notes.toLowerCase().includes(searchNotes.toLowerCase()) : true;
-
+      const dateMatch = (!start || new Date(transaction.date) >= start) && (!end || new Date(transaction.date) <= end);
+    
       return categoryMatch && dateMatch && notesMatch;
     });
 
@@ -130,12 +138,12 @@ const Transactions = () => {
 
   const onStartDateChange = (event: any, selectedDate: Date | undefined) => {
     setShowStartDatePicker(false);
-    setStartDate(formatDate(selectedDate));
+    setStartDate(selectedDate?.toISOString().split('T')[0]);
   };
 
   const onEndDateChange = (event: any, selectedDate: Date | undefined) => {
     setShowToDatePicker(false);
-    setToDate(formatDate(selectedDate));
+    setToDate(selectedDate?.toISOString().split('T')[0]);
   };
 
   return (

@@ -243,7 +243,7 @@ export const getTransactions = async (): Promise<Transaction[]> => {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
-                `SELECT * from transactions t join categories c on t.category_id = c.id ORDER BY date desc`,
+                `SELECT * from transactions t join categories c on t.category_id = c.id ORDER BY date, created_at asc`,
                 [],
                 (_, { rows: { _array } }) => resolve(_array),
                 (_, error) => {
