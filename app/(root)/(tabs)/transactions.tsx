@@ -1,11 +1,8 @@
 import { View, Text, TouchableOpacity, Image, Alert, SectionList } from 'react-native'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { getTransactions } from '@/db/db'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { FlatList, TextInput } from 'react-native-gesture-handler'
-import { imageMap } from '@/lib/images'
-import { formatDate, handleAction, reload } from '@/lib/helpers'
-import { MoneyDisplay } from '@/components/MoneyDisplay'
+import { TextInput } from 'react-native-gesture-handler'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import DetailsModal from '@/components/DetailsModal'
 import Controls from '@/components/controls'
@@ -13,14 +10,12 @@ import EditTransaction from '@/components/EditTransaction'
 import AddTransaction from '@/components/AddTransaction'
 import { FontAwesome } from '@expo/vector-icons'
 import { SingleTransaction } from '@/components/SingleTransaction'
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import CategoryModal from '@/components/CategoryModal'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router'
 
 const Transactions = () => {
   const [rawtransactions, setRawtransactions] = useState([])
-  const [filteredTransactions, setFilteredTransactions] = useState([])
   const [transactions, setTransactions] = useState([])
   const [transactionType, setTransactionType] = useState('')
   const [searchCategory, setSearchCategory] = useState('')

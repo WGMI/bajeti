@@ -3,10 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Platform, Alert, KeyboardAvoidingView } from 'react-native';
 import CategoryModal from './CategoryModal';
 import { imageMap } from '@/lib/images';
-import { createTransaction, getCategory, Transaction, updateTransaction } from '@/db/db';
+import { getCategory, Transaction, updateTransaction } from '@/db/db';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import uuid from 'react-native-uuid';
-import Transactions from '@/app/(root)/(tabs)/transactions';
 import { formatDate } from '@/lib/helpers';
 
 const EditTransaction = ({ close, transaction }: { close: (refresh: boolean) => void, transaction: Object }) => {

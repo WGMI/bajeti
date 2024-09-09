@@ -257,7 +257,7 @@ export const getTransactions = async (): Promise<Transaction[]> => {
 
 export const getTotalIncome = (month: boolean): Promise<number> => {
     return new Promise((resolve, reject) => {
-        const query = `SELECT COALESCE(SUM(t.amount), 0) AS total_income FROM transactions t JOIN categories c ON t.category_id = c.id WHERE c.type = 'income' ${ month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};`;
+        const query = `SELECT COALESCE(SUM(t.amount), 0) AS total_income FROM transactions t JOIN categories c ON t.category_id = c.id WHERE c.type = 'income' ${month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};`;
         db.transaction((tx) => {
             tx.executeSql(
                 query,
@@ -282,7 +282,7 @@ export const getTotalExpenses = (month: boolean): Promise<number> => {
         SELECT COALESCE(SUM(t.amount), 0) AS total_expenses
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
-        WHERE c.type = 'expense' ${ month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};
+        WHERE c.type = 'expense' ${month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};
       `;
 
         db.transaction((tx) => {
@@ -417,10 +417,40 @@ export const getTransactionById = async (id: number): Promise<Transaction | null
     });
 };
 
+export const getSummaryData = async (): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                `
+            SELECT 
+                strftime('%Y-%m', t.date) AS month, 
+                SUM(CASE WHEN c.type = 'income' THEN t.amount ELSE 0 END) AS total_income,
+                SUM(CASE WHEN c.type = 'expense' THEN t.amount ELSE 0 END) AS total_expenses
+            FROM 
+                transactions t
+            JOIN 
+                categories c ON t.category_id = c.id
+            GROUP BY 
+                strftime('%Y-%m', t.date);
+            ORDER BY 
+                strftime('%Y-%m', t.date) DESC;
+
+          `,
+                [],
+                (_, { rows: { _array } }) => resolve(_array),
+                (_, error) => {
+                    reject(error);
+                    return false;
+                }
+            );
+        });
+    });
+};
+
 export const updateTransaction = (uuid: string, amount: number, category_id: number, description: string, date: string) => {
     console.log(`UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`)
     console.log([amount, category_id, description, date, uuid])
-            
+
     db.transaction(tx => {
         tx.executeSql(
             `UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,

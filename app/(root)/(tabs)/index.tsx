@@ -1,15 +1,13 @@
-import { View, Text, FlatList, Image, Alert, TouchableOpacity } from 'react-native'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { View, Text, FlatList, Alert } from 'react-native'
+import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
-import { formatDate, formatMoney, handleAction, reload } from '@/lib/helpers'
+import { handleAction, reload } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import AddTransaction from '@/components/AddTransaction';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { deleteTransaction, getCategories, getDataByCategory, getExpenditureByCategory, getSevenDaysTransactions, getTotalExpenses, getTotalIncome, getTransactions } from '@/db/db';
-import { imageMap } from '@/lib/images';
+import { getDataByCategory, getSevenDaysTransactions, getTotalExpenses, getTotalIncome } from '@/db/db';
 import DetailsModal from '@/components/DetailsModal'
 import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'

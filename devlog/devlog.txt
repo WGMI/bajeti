@@ -105,3 +105,6 @@ Day 11
 
 Home stretch. The summary page is next. I'm skipping the search function on the transaction page for now.
 
+Smoothest day yet! I ended up doing the search on the transactions page. I also started on the summary page. 
+It's fetching and displaying the data. I just need some styling.
+

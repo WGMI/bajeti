@@ -5,3 +5,7 @@ Order by date desc (Maybe use JS sort)
 Home:
 
 Order by date desc (Maybe use JS sort)
+
+DB:
+
+CRUD for categories
