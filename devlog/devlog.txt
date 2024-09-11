@@ -108,3 +108,18 @@ Home stretch. The summary page is next. I'm skipping the search function on the 
 Smoothest day yet! I ended up doing the search on the transactions page. I also started on the summary page. 
 It's fetching and displaying the data. I just need some styling.
 
+Day 12
+
+Some styling. Some CRUD. Some testing.
+
+It really gets easier as you get to the end. Summary is looking nice. 
+Despite my efforts, the code is not very DRY.
+
+Day 13
+
+We're getting close to the deadline but I'm confident
+
+Settings page has started and is close to done. It will be used for categories CRUD.
+CRUD is done!
+Are we done!!?
+

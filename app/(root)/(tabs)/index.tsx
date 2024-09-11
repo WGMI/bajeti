@@ -1,8 +1,8 @@
-import { View, Text, FlatList, Alert } from 'react-native'
+import { View, Text, FlatList, Alert, TouchableOpacity } from 'react-native'
 import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
-import { handleAction, reload } from '@/lib/helpers'
+import { handleAction, newCategory, reload } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -12,7 +12,7 @@ import DetailsModal from '@/components/DetailsModal'
 import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
 import { SingleTransaction } from '@/components/SingleTransaction'
-import { useFocusEffect } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 
 const index = () => {
 
@@ -42,11 +42,11 @@ const index = () => {
   }
 
   const fetchWeekTransactions = async () => {
-    try{
+    try {
       const transactions = await getSevenDaysTransactions()
       setTransactions(transactions)
     }
-    catch(e){
+    catch (e) {
       Alert.alert('Error fetching transactions', e)
       console.log(e)
     }
@@ -89,6 +89,10 @@ const index = () => {
     }
   }
 
+  const addNewCategory = (ref: React.RefObject<BottomSheetMethods>) => {
+    newCategory(bottomSheetRef)
+  }
+
   return (
     <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
       <View className='flex flex-row justify-between items-center rounded-lg my-5'>
@@ -99,7 +103,9 @@ const index = () => {
           </View>
         </View>
         <View>
-          <OverviewChart income={monthIncome} expenses={monthExpenses} />
+          <TouchableOpacity onPress={() => router.push('/summary')}>
+            <OverviewChart income={monthIncome} expenses={monthExpenses} />
+          </TouchableOpacity>
         </View>
       </View>
       <View className="flex-row justify-between items-center mb-5">
@@ -129,7 +135,7 @@ const index = () => {
         )}
         keyExtractor={(item) => item.uuid}
         renderItem={({ item }) => (
-          <SingleTransaction item={item} onPress={() => { setDetailData(item); setDetailVisible(true); }}/>
+          <SingleTransaction item={item} onPress={() => { setDetailData(item); setDetailVisible(true); }} />
         )}
       />
       <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
@@ -142,9 +148,9 @@ const index = () => {
       <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
         <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
           {transactionToEdit ?
-            <EditTransaction close={(refresh) => { reload(refresh,bottomSheetRef,reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
+            <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
             :
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh,bottomSheetRef,reset)} />
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} />
           }
         </BottomSheetScrollView>
       </BottomSheet>

@@ -255,6 +255,22 @@ export const getTransactions = async (): Promise<Transaction[]> => {
     });
 };
 
+export const getTransactionsForMonth = async (month: string): Promise<Transaction[]> => {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                `SELECT * from transactions t join categories c on t.category_id = c.id WHERE strftime("%Y-%m", t.date) = ? ORDER BY date, created_at asc`,
+                [month],
+                (_, { rows: { _array } }) => resolve(_array),
+                (_, error) => {
+                    reject(error);
+                    return false;
+                }
+            );
+        });
+    });
+};
+
 export const getTotalIncome = (month: boolean): Promise<number> => {
     return new Promise((resolve, reject) => {
         const query = `SELECT COALESCE(SUM(t.amount), 0) AS total_income FROM transactions t JOIN categories c ON t.category_id = c.id WHERE c.type = 'income' ${month ? 'AND strftime("%Y-%m", t.date) = strftime("%Y-%m", "now")' : ''};`;

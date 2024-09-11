@@ -176,7 +176,7 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
         className='bg-blue-500 rounded-md p-2'
         onPress={handleAddTransaction}
       >
-        <Text className='text-white text-center'>Add Transaction</Text>
+        <Text className='text-white font-Poppins text-center'>Add Transaction</Text>
       </TouchableOpacity>
     </View>
   );

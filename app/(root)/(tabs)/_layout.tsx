@@ -50,6 +50,14 @@ const Layout = () => {
                     tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="list" label="Transactions" /> 
                 }}
             />
+            <Tabs.Screen
+                name='settings'
+                options={{ 
+                    title: 'Settings', 
+                    headerShown: false, 
+                    tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="gear" label="settings" /> 
+                }}
+            />
         </Tabs>
     )
 }

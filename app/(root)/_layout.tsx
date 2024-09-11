@@ -8,6 +8,7 @@ const Layout = () => {
     <GestureHandlerRootView>
       <Stack>
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name="monthtransactions" options={{ headerShown: false }} />
       </Stack>
     </GestureHandlerRootView>
   )
