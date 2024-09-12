@@ -13,6 +13,7 @@ import { SingleTransaction } from '@/components/SingleTransaction'
 import CategoryModal from '@/components/CategoryModal'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router'
+import { reload } from '@/lib/helpers'
 
 const Transactions = () => {
   const [rawtransactions, setRawtransactions] = useState([])
@@ -67,15 +68,12 @@ const Transactions = () => {
       const start = startDate ? new Date(startDate) : null;
       const end = toDate ? new Date(toDate) : null;
 
-      console.log(start,end)
-
       const dateMatch = (!start || new Date(transaction.date) >= start) && (!end || new Date(transaction.date) <= end);
     
       return categoryMatch && dateMatch && notesMatch;
     });
 
     const filtered = groupTransactionsByMonth(filteredTransactions)
-    console.log(filtered)
     setTransactions(filtered);
   };
 
@@ -84,6 +82,7 @@ const Transactions = () => {
   const getTransactionData = async () => {
     try {
       const transactions = await getTransactions()
+      transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       setRawtransactions(transactions)
       setTransactions(groupTransactionsByMonth(transactions))
     } catch (error) {
@@ -143,7 +142,7 @@ const Transactions = () => {
 
   return (
     <SafeAreaView className='flex flex-1 bg-[#292929]'>
-      <View>
+      <View className='pb-20'>
         <View className='flex-row justify-between items-center bg-[#6034de] p-3 mb-2'>
           <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
           <TouchableOpacity onPress={opensearch}>

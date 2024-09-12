@@ -44,6 +44,7 @@ const index = () => {
   const fetchWeekTransactions = async () => {
     try {
       const transactions = await getSevenDaysTransactions()
+      transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       setTransactions(transactions)
     }
     catch (e) {
