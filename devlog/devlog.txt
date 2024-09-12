@@ -123,3 +123,8 @@ Settings page has started and is close to done. It will be used for categories C
 CRUD is done!
 Are we done!!?
 
+Day 14 
+
+No, we're not. Close, though. I forgot the D (in CRUD). Also, I need to reload the page gracefully. Also, I need confirmation
+messages. Also, I need to sort the data. Also, also, also ...
+
