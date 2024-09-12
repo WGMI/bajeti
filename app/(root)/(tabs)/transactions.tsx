@@ -13,7 +13,7 @@ import { SingleTransaction } from '@/components/SingleTransaction'
 import CategoryModal from '@/components/CategoryModal'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router'
-import { reload } from '@/lib/helpers'
+import { handleAction, reload } from '@/lib/helpers'
 
 const Transactions = () => {
   const [rawtransactions, setRawtransactions] = useState([])
