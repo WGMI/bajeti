@@ -1,10 +1,13 @@
-import { getCategories, getCategoriesByType } from '@/db/db';
+import { deleteCategory, getCategories, getCategoriesByType } from '@/db/db';
+import { imageMap } from '@/lib/images';
+import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { Modal, View, Text, FlatList, TouchableOpacity, Alert, Image } from 'react-native';
 
-const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boolean, type: string, setCategory: (item: Object) => void, onClose: () => void }) => {
+const CategoryModal = ({ visible, type, setCategory, onClose, deletable, updated }: { visible: boolean, type: string, setCategory: (item: Object) => void, onClose: () => void, deletable?: boolean, updated?: boolean }) => {
   const [categories, setCategories] = useState<any[]>([]);
+  const [deleted, setDeleted] = useState(false);
 
   useEffect(() => {
     if (type == 'all') {
@@ -13,7 +16,29 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
       fetchCategories(type);
       fetchTest()
     }
-  }, [type]);
+  }, [type,deleted,updated]);
+
+  const handleDeleteCategory = (id: number) => {
+    Alert.alert('Delete Category', 'Are you sure you want to delete this category?', [
+      {
+        text: 'Cancel',
+        style: 'cancel'
+      },
+      {
+        text: 'Delete',
+        onPress: async () => {
+          try {
+            await deleteCategory(id);
+            Alert.alert('Success', 'Category deleted');
+            setDeleted(!deleted)
+          } catch (error) {
+            console.log(error)
+            Alert.alert('Error', 'Failed to delete category: ' + error);
+          }
+        }
+      }
+    ]);
+  }
 
   const fetchCategories = async (categoryType: string) => {
     await getCategoriesByType(categoryType)
@@ -63,9 +88,19 @@ const CategoryModal = ({ visible, type, setCategory, onClose }: { visible: boole
             data={categories}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => selectCategory(item)} className='py-2 border-b border-gray-300'>
-                <Text className='text-white font-Poppins'>{item.name}</Text>
-              </TouchableOpacity>
+              <View className='flex-row justify-between items-center border-b border-gray-300'>
+                <TouchableOpacity onPress={() => selectCategory(item)} className='flex-row items-center py-2'>
+                  <Image source={imageMap[item.image]} className='w-10 h-10 rounded-full object-cover mr-2' />
+                  <Text className='text-white font-Poppins'>{item.name}</Text>
+                </TouchableOpacity>
+                {deletable ?
+                  <TouchableOpacity onPress={() => handleDeleteCategory(item.id)}>
+                    <FontAwesome name="trash" size={20} color="white" />
+                  </TouchableOpacity>
+                  :
+                  <></>
+                }
+              </View>
             )}
           />
 
