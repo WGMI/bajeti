@@ -205,8 +205,6 @@ export interface Transaction {
 
 // Create a transaction
 export const createTransaction = async (transaction: Transaction): Promise<void> => {
-    console.log(`INSERT INTO transactions (uuid, category_id, amount, description, date, source_id) VALUES (?, ?, ?, ?, ?, ?)`)
-    console.log([transaction.uuid, transaction.category_id, transaction.amount, transaction.description || null, transaction.date, transaction.source_id || null])
     return new Promise((resolve, reject) => {
         db.transaction(tx => {
             tx.executeSql(
@@ -464,10 +462,8 @@ export const getSummaryData = async (): Promise<any[]> => {
 };
 
 export const updateTransaction = (uuid: string, amount: number, category_id: number, description: string, date: string) => {
-    console.log(`UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`)
-    console.log([amount, category_id, description, date, uuid])
-
-    db.transaction(tx => {
+    
+db.transaction(tx => {
         tx.executeSql(
             `UPDATE transactions SET amount = ?, category_id = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP WHERE uuid = ?`,
             [amount, category_id, description, date, uuid],
