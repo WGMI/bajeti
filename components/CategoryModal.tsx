@@ -53,8 +53,7 @@ const CategoryModal = ({ visible, type, setCategory, onClose, deletable, updated
 
   const fetchTest = async () => {
     try {
-      const allcategories = await getCategories()
-      console.log(allcategories)
+      await getCategories()
     } catch (error) {
       console.log('Error fetching categories:', error);
       Alert.alert('Error', 'Failed to fetch categories');
