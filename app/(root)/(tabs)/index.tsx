@@ -2,12 +2,12 @@ import { View, Text, FlatList, Alert, TouchableOpacity } from 'react-native'
 import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
-import { handleAction, newCategory, reload } from '@/lib/helpers'
+import { handleAction, reload } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import AddTransaction from '@/components/AddTransaction';
-import { getDataByCategory, getSevenDaysTransactions, getTotalExpenses, getTotalIncome } from '@/db/db';
+import { getDataByCategory, getSevenDaysTransactions, getTotalExpenses, getTotalIncome, Transaction } from '@/db/db';
 import DetailsModal from '@/components/DetailsModal'
 import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
@@ -17,7 +17,7 @@ import { router, useFocusEffect } from 'expo-router'
 const index = () => {
 
   const [transactionType, setTransactionType] = useState('')
-  const [transactions, setTransactions] = useState([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [income, setIncome] = useState(0)
   const [expenses, setExpenses] = useState(0)
   const [monthIncome, setMonthIncome] = useState(0)
@@ -88,10 +88,6 @@ const index = () => {
       console.log(e)
       Alert.alert('Error', e as string)
     }
-  }
-
-  const addNewCategory = (ref: React.RefObject<BottomSheetMethods>) => {
-    newCategory(bottomSheetRef)
   }
 
   return (
