@@ -2,9 +2,35 @@ import CategoryIcons from '@/components/CategoryIcons';
 import CategoryModal from '@/components/CategoryModal';
 import { addCategory, deleteCategory, deleteTransaction, updateCategory } from '@/db/db';
 import { imageMap } from '@/lib/images';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { hello, getMessagesFromSender } from '@/modules/smsreader';
+import { PermissionsAndroid } from 'react-native';
+
+async function requestSmsPermission() {
+    try {
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_SMS,
+            {
+                title: "SMS Permission",
+                message: "This app needs access to your SMS messages",
+                buttonNeutral: "Ask Me Later",
+                buttonNegative: "Cancel",
+                buttonPositive: "OK"
+            }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log("You can read SMS")
+            console.log(getMessagesFromSender("Airtel"))
+        } else {
+            console.log("SMS permission denied");
+        }
+    } catch (err) {
+        console.warn(err);
+    }
+}
 
 const Settings = () => {
     const [categoryName, setCategoryName] = useState('');
@@ -16,6 +42,11 @@ const Settings = () => {
     const [addSectionVisible, setAddSectionVisible] = useState(false);
     const [categoryToEdit, setCategoryToEdit] = useState(null);
     const [updated, setUpdated] = useState(false);
+
+    useEffect(() => {
+        console.log(hello())
+        requestSmsPermission()
+    },[])
 
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
