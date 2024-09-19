@@ -11,3 +11,7 @@ export function hello(): string {
 export function getMessagesFromSender(sender: string): any {
   return SmsreaderModule.getMessagesFromSender(sender);
 }
+
+export function getSenders(): string[] {
+  return SmsreaderModule.getSenders()
+}

@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, Alert, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { hello, getMessagesFromSender } from '@/modules/smsreader';
+import { hello, getMessagesFromSender, getSenders } from '@/modules/smsreader';
 import { PermissionsAndroid } from 'react-native';
 
 import { Category } from '@/lib/types';
@@ -25,7 +25,7 @@ async function requestSmsPermission() {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             console.log("You can read SMS")
-            console.log(getMessagesFromSender("NCBALOOP"))
+            console.log(getSenders())
         } else {
             console.log("SMS permission denied");
         }
@@ -44,17 +44,13 @@ const Settings = () => {
     const [addSectionVisible, setAddSectionVisible] = useState(false);
     const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
     const [updated, setUpdated] = useState(false);
+    const [senderListVisible,setSenderListVisible] = useState(false)
 
     const [hasSmsPermission, setHasSmsPermission] = useState<boolean | null>(null);
 
     const toggleSwitch = () => setHasSmsPermission(previousState => !previousState);
 
     useEffect(() => {
-        console.log(hasSmsPermission)
-    },[hasSmsPermission])
-
-    useEffect(() => {
-        console.log(hello())
         requestSmsPermission()
     }, [])
 
@@ -257,6 +253,16 @@ const Settings = () => {
                     />
                     <Text className={`mx-3 text-white font-Poppins`}>Fetch transactions from SMS</Text>
                 </View>
+                {hasSmsPermission ?
+                    <>
+                        <Text className='text-lg text-white font-PoppinsBold'>Senders To Watch</Text>
+                        <TouchableOpacity className='mb-2 p-3 rounded-md border border-[#85d5ed]' onPress={() => { setSenderListVisible(!senderListVisible);}}>
+                            <Text className='text-white text-center font-Poppins'>{senderListVisible ? 'Close' : 'Add Senders'}</Text>
+                        </TouchableOpacity>
+                    </>
+                    :
+                    <></>
+                }
             </View>
         </SafeAreaView>
     );

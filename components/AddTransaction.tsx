@@ -55,6 +55,8 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     setShow(initialState.show);
     setSelectedCategory(initialState.selectedCategory);
     setCategoryValidation(initialState.categoryValidation);
+    setShowSMSInput(initialState.showSMSInput)
+    setSms(initialState.sms)
   };
 
   const onDateChange = (event: any, selectedDate: Date | undefined) => {
@@ -75,9 +77,8 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     };
 
     const { message, timestamp } = sms;
-
-    // Regular expression to find amounts in KES, Ksh, or USD
-    const amountRegex = /(KES|Ksh)\s?([\d,]+\.\d{2})|USD\s?([\d,]+\.\d{2})/;
+    // Regular expression to find amounts in KES, Ksh, Kshs (with optional period), or USD
+    const amountRegex = /(KES|Ksh|Kshs\.?)\s?([\d,]+\.\d{1,2})|USD\s?([\d,]+\.\d{2})/;
     // Regular expression to find dates in the format dd/mm/yy, dd/mm/yyyy, or yyyy-mm-dd
     const dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}/;
 
@@ -128,9 +129,17 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     }
 
     // Return the result
-    setAmount(result.amount)
-    setDate(new Date(result.date))
-    setTypeOfTransaction(result.type)
+    if (result.amount !== null) {
+      setAmount(result.amount);
+  }
+
+  if (result.date) {
+      setDate(new Date(result.date));  // Ensure date is valid before updating state
+  }
+
+  if (result.type) {
+      setTypeOfTransaction(result.type);
+  }
     setNotes(message)
   }
 
