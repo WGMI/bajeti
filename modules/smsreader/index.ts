@@ -12,6 +12,10 @@ export function getMessagesFromSender(sender: string): any {
   return SmsreaderModule.getMessagesFromSender(sender);
 }
 
+export function getMessagesFromSenderOnDate(sender: String, date: String): any {
+  return SmsreaderModule.getMessagesFromSenderOnDate(sender, date);
+}
+
 export function getSenders(): string[] {
   return SmsreaderModule.getSenders()
 }

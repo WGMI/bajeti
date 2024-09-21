@@ -2,7 +2,7 @@ import { View, Text, FlatList, Alert, TouchableOpacity } from 'react-native'
 import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
-import { handleAction, reload } from '@/lib/helpers'
+import { fetchSenders, getMessagesOfTheDay, handleAction, reload } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -13,6 +13,8 @@ import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
 import { SingleTransaction } from '@/components/SingleTransaction'
 import { router, useFocusEffect } from 'expo-router'
+import SenderChips from '@/components/SenderChips'
+import { getSenders } from '@/modules/smsreader'
 
 const index = () => {
 
@@ -26,6 +28,8 @@ const index = () => {
   const [detailData, setDetailData] = useState(null)
   const [detailVisible, setDetailVisible] = useState(false)
   const [transactionToEdit, setTransactionToEdit] = useState(null)
+  const [messagesOfTheDay, setMessagesOfTheDay] = useState([])
+  const [senders, setSenders] = useState([])
   const bottomSheetRef = useRef<BottomSheet>(null)
 
   useFocusEffect(
@@ -34,11 +38,20 @@ const index = () => {
     }, [])
   );
 
-  const reset = () => {
+  const reset = async () => {
     fetchWeekTransactions()
     getUserMonthTotal()
     getCategoryData()
     getUserTotal()
+    getSenders()
+    const messages = await getMessagesOfTheDay()
+    setMessagesOfTheDay(messages)
+  }
+
+  const getSenders = async () => {
+    const senderList = await fetchSenders()
+    console.log('List:',senderList)
+    setSenders(senderList)
   }
 
   const fetchWeekTransactions = async () => {
@@ -48,7 +61,7 @@ const index = () => {
       setTransactions(transactions)
     }
     catch (e) {
-      Alert.alert('Error fetching transactions', e)
+      Alert.alert('Error fetching transactions', (e as Error).message)
       console.log(e)
     }
   }
@@ -124,6 +137,7 @@ const index = () => {
         ListHeaderComponent={() => (
           <View>
             <TopCategories categoryData={categoryData} />
+            <SenderChips selectedSenders={senders} />
             <View className='flex-row'>
               <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
               <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
