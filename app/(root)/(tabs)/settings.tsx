@@ -100,7 +100,7 @@ const Settings = () => {
     const getFilteredSenders = () => {
         // Filter senders based on search term
         return senders.filter(sender =>
-            sender.toLowerCase().includes(searchTerm.toLowerCase())
+            sender.toLowerCase().includes(searchTerm.toLowerCase().trim())
         );
     };
 

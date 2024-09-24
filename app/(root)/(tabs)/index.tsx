@@ -12,9 +12,9 @@ import DetailsModal from '@/components/DetailsModal'
 import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
 import { SingleTransaction } from '@/components/SingleTransaction'
-import { router, useFocusEffect } from 'expo-router'
+import { Href, router, useFocusEffect } from 'expo-router'
 import SenderChips from '@/components/SenderChips'
-import { getSenders } from '@/modules/smsreader'
+import { FontAwesome } from '@expo/vector-icons'
 
 const index = () => {
 
@@ -50,7 +50,6 @@ const index = () => {
 
   const getSenders = async () => {
     const senderList = await fetchSenders()
-    console.log('List:',senderList)
     setSenders(senderList)
   }
 
@@ -103,6 +102,10 @@ const index = () => {
     }
   }
 
+  const viewMessagesOfTheDay = () => {
+    router.push(`/messages` as Href<string>)
+  }
+
   return (
     <SafeAreaView className='flex flex-1 bg-[#292929] p-3'>
       <View className='flex flex-row justify-between items-center rounded-lg my-5'>
@@ -137,7 +140,21 @@ const index = () => {
         ListHeaderComponent={() => (
           <View>
             <TopCategories categoryData={categoryData} />
-            <SenderChips selectedSenders={senders} />
+            <View className='flex-row'>{
+              messagesOfTheDay.some(obj => {
+                const value: any = Object.values(obj)[0]; // Get the list (value) from the object
+                return value.length > 0; // Check if the list has elements
+              }) ?
+                <TouchableOpacity onPress={viewMessagesOfTheDay}>
+                  <View className={`bg-[#85d5ed] flex-row items-center rounded-full px-3 py-1 mr-2 mb-2`}>
+                    <FontAwesome name='plus' size={18} color='#fff' />
+                  </View>
+                </TouchableOpacity>
+                :
+                <></>
+            }
+              <SenderChips selectedSenders={senders} />
+            </View>
             <View className='flex-row'>
               <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
               <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
@@ -161,7 +178,7 @@ const index = () => {
           {transactionToEdit ?
             <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
             :
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} />
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} allowSMS={true} />
           }
         </BottomSheetScrollView>
       </BottomSheet>

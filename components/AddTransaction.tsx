@@ -6,8 +6,9 @@ import { imageMap } from '@/lib/images';
 import { createTransaction, Transaction } from '@/db/db';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
+import { parseSMS } from '@/lib/helpers';
 
-const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) => void, transactionType: string }) => {
+const AddTransaction = ({ details, close, transactionType, allowSMS }: { details?:any, close: (refresh: boolean) => void, transactionType: string, allowSMS: boolean }) => {
   const initialState = {
     amount: 0,
     amountValidation: true,
@@ -44,6 +45,14 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     setTypeOfTransaction(transactionType)
   }, [transactionType])
 
+  useEffect(() => {
+    if(details){
+      setAmount(details.amount.toString())
+      setDate(new Date(details.date))
+      setNotes(details.message)
+    }
+  },[details])
+
   // Define resetState function
   const resetState = () => {
     setAmount(initialState.amount);
@@ -68,80 +77,6 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
   const showDatepicker = () => {
     setShow(true);
   };
-
-  function parseSMS(sms) {
-    let result = {
-      type: "neither", // Default to "neither" if the message doesn't match income or expense
-      amount: null,
-      date: null
-    };
-
-    const { message, timestamp } = sms;
-    // Regular expression to find amounts in KES, Ksh, Kshs (with optional period), or USD
-    const amountRegex = /(KES|Ksh|Kshs\.?)\s?([\d,]+\.\d{1,2})|USD\s?([\d,]+\.\d{2})/;
-    // Regular expression to find dates in the format dd/mm/yy, dd/mm/yyyy, or yyyy-mm-dd
-    const dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}/;
-
-    // Match the amount
-    const amountMatch = message.match(amountRegex);
-    if (amountMatch) {
-      // Remove commas and convert the amount to a float
-      const matchedAmount = amountMatch[2] || amountMatch[3];
-      result.amount = parseFloat(matchedAmount.replace(/,/g, ''));
-    }
-
-    // Helper function to format dates to yyyy-mm-dd
-    function formatDate(date) {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    // Helper function to convert dd/mm/yy or dd/mm/yyyy to yyyy-mm-dd
-    function convertShortYearDate(dateString) {
-      const [day, month, year] = dateString.split('/');
-      const fullYear = year.length === 2 ? `20${year}` : year; // Assume years like "24" are "2024"
-      return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Use the timestamp if present, otherwise fall back to the date from the message
-    if (timestamp) {
-      result.date = formatDate(parseInt(timestamp));
-    } else {
-      const dateMatch = message.match(dateRegex);
-      if (dateMatch) {
-        const dateString = dateMatch[0];
-        if (dateString.includes('/')) {
-          result.date = convertShortYearDate(dateString);
-        } else {
-          result.date = dateString; // yyyy-mm-dd format doesn't need modification
-        }
-      }
-    }
-
-    // Determine if it's income or expense
-    if (message.includes("sent to") || message.includes("Auth for card") || message.includes("paid to")) {
-      result.type = "expense";
-    } else if (message.includes("received") || message.includes("credited to")) {
-      result.type = "income";
-    }
-
-    // Return the result
-    if (result.amount !== null) {
-      setAmount(result.amount);
-  }
-
-  if (result.date) {
-      setDate(new Date(result.date));  // Ensure date is valid before updating state
-  }
-
-  if (result.type) {
-      setTypeOfTransaction(result.type);
-  }
-    setNotes(message)
-  }
 
   const handleAddTransaction = async () => {
     if (!amount || !selectedCategory.id) {
@@ -176,6 +111,22 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
     close(false)
   }
 
+  const handleSMS = (data:any) => {
+    const result = parseSMS(data)
+    if (result.amount !== 0) {
+      setAmount(result.amount);
+    }
+  
+    if (result.date) {
+      setDate(new Date(result.date));  // Ensure date is valid before updating state
+    }
+  
+    if (result.type) {
+      setTypeOfTransaction(result.type);
+    }
+    setNotes(result.message)
+  }
+
   return (
     <View className='bg-[#333] flex-1 p-4'>
       <View className='flex-row justify-between items-start my-5'>
@@ -185,9 +136,13 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
         </TouchableOpacity>
       </View>
 
+      {allowSMS ?
       <TouchableOpacity onPress={() => setShowSMSInput(!showSMSInput)} className='flex-row justify-center items-center w-fit my-3 border border-blue-500 rounded-md p-2'>
         <FontAwesome name={showSMSInput ? 'close' : 'envelope'} size={18} color='#fff' /><Text className='mx-3 w-fit text-white font-Poppins'>{showSMSInput ? 'Close' : 'Paste SMS message'}</Text>
       </TouchableOpacity>
+      :
+      <></>
+      }
       {showSMSInput ?
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View className={`flex-row items-center border ${typeOfTransaction === 'income' ? 'border-green-500' : 'border-red-500'} rounded-md p-2 mb-4`}>
@@ -226,10 +181,10 @@ const AddTransaction = ({ close, transactionType }: { close: (refresh: boolean) 
           </View>
           <TouchableOpacity
             className='bg-blue-500 rounded-md p-2 mb-3'
-            onPress={() => parseSMS({
+            onPress={() => handleSMS({
               message: sms,
               sender: "",
-              timestamp: null
+              timestamp: 0
             })}
           >
             <Text className='text-white font-Poppins text-center'>Submit</Text>

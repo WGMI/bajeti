@@ -118,11 +118,75 @@ export const getMessagesOfTheDay = async () => {
 
 export const fetchSenders = async () => {
   try {
-      const storedSenders = await AsyncStorage.getItem('selectedSenders');
-      if (storedSenders) {
-          return JSON.parse(storedSenders);
-      }
+    const storedSenders = await AsyncStorage.getItem('selectedSenders');
+    if (storedSenders) {
+      return JSON.parse(storedSenders);
+    }
   } catch (error) {
-      Alert.alert('Failed to load senders from storage', (error as Error).message);
+    Alert.alert('Failed to load senders from storage', (error as Error).message);
   }
 };
+
+export const parseSMS = (sms:any) => {
+  let result = {
+    message:sms.message,
+    type: "neither", // Default to "neither" if the message doesn't match income or expense
+    amount: 0,
+    date: ''
+  };
+
+  const { message, timestamp } = sms;
+  // Regular expression to find amounts in KES, Ksh, Kshs (with optional period), or USD
+  const amountRegex = /(KES|Ksh|Kshs\.?)\s?([\d,]+\.\d{1,2})|USD\s?([\d,]+\.\d{2})/;
+  // Regular expression to find dates in the format dd/mm/yy, dd/mm/yyyy, or yyyy-mm-dd
+  const dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}/;
+
+  // Match the amount
+  const amountMatch = message.match(amountRegex);
+  if (amountMatch) {
+    // Remove commas and convert the amount to a float
+    const matchedAmount = amountMatch[2] || amountMatch[3];
+    result.amount = parseFloat(matchedAmount.replace(/,/g, ''));
+  }
+
+  // Helper function to format dates to yyyy-mm-dd
+  function formatDate(date:any) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Helper function to convert dd/mm/yy or dd/mm/yyyy to yyyy-mm-dd
+  function convertShortYearDate(dateString:string) {
+    const [day, month, year] = dateString.split('/');
+    const fullYear = year.length === 2 ? `20${year}` : year; // Assume years like "24" are "2024"
+    return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // Use the timestamp if present, otherwise fall back to the date from the message
+  if (timestamp) {
+    result.date = formatDate(parseInt(timestamp));
+  } else {
+    const dateMatch = message.match(dateRegex);
+    if (dateMatch) {
+      const dateString = dateMatch[0];
+      if (dateString.includes('/')) {
+        result.date = convertShortYearDate(dateString);
+      } else {
+        result.date = dateString; // yyyy-mm-dd format doesn't need modification
+      }
+    }
+  }
+
+  // Determine if it's income or expense
+  if (message.includes("sent to") || message.includes("Auth for card") || message.includes("paid to")) {
+    result.type = "expense";
+  } else if (message.includes("received") || message.includes("credited to")) {
+    result.type = "income";
+  }
+
+  // Return the result
+  return result
+}
