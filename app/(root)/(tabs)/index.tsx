@@ -146,14 +146,13 @@ const index = () => {
                 return value.length > 0; // Check if the list has elements
               }) ?
                 <TouchableOpacity onPress={viewMessagesOfTheDay}>
-                  <View className={`bg-[#85d5ed] flex-row items-center rounded-full px-3 py-1 mr-2 mb-2`}>
-                    <FontAwesome name='plus' size={18} color='#fff' />
+                  <View className={`border border-[#85d5ed] flex-row items-center rounded-full px-3 py-1 mr-2 mb-2`}>
+                    <FontAwesome name='envelope' size={18} color='#fff' /><Text className='text-white ml-2 font-Poppins'>Add From SMS Messages</Text>
                   </View>
                 </TouchableOpacity>
                 :
                 <></>
             }
-              <SenderChips selectedSenders={senders} />
             </View>
             <View className='flex-row'>
               <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>

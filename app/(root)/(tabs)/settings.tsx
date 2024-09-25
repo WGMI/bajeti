@@ -1,6 +1,6 @@
 import CategoryIcons from '@/components/CategoryIcons';
 import CategoryModal from '@/components/CategoryModal';
-import { addCategory, updateCategory } from '@/db/db';
+import { addCategory, createTransaction, getCategoriesByName, updateCategory } from '@/db/db';
 import { imageMap } from '@/lib/images';
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, Alert, ScrollView, Switch, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
@@ -9,12 +9,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getMessagesFromSender, getMessagesFromSenderOnDate, getSenders } from '@/modules/smsreader';
 import { PermissionsAndroid } from 'react-native';
 
-import { Category } from '@/lib/types';
+import { Category, Transaction } from '@/lib/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import SenderChips from '@/components/SenderChips';
-import { fetchSenders } from '@/lib/helpers';
-
+import { fetchSenders, parseSMS } from '@/lib/helpers';
+import uuid from 'react-native-uuid';
 
 const Settings = () => {
     const [categoryName, setCategoryName] = useState('');
@@ -158,6 +158,87 @@ const Settings = () => {
             Alert.alert('Info', `${sender} is already in the list`);
         }
     };
+
+    const importSenderMessages = async (sender: string) => {
+        Alert.alert(
+            'Import from ' + sender,
+            'All SMS messages from ' + sender + ' will be added to your transaction list.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                    onPress: () => { return },
+                },
+                {
+                    text: 'Import',
+                    onPress: async () => {
+                        const messageData = await getMessagesFromSender(sender);
+                        if (messageData.length == 0) return;
+
+                        let income = 0;
+                        let expense = 0;
+
+                        // Step 1: Fetch categories and set income/expense values before moving forward
+                        try {
+                            const otherCategory: any = await getCategoriesByName('Other');
+                            console.log(otherCategory);
+
+                            otherCategory.forEach(el => {
+                                if (el.type == 'income') income = el.id;
+                                if (el.type == 'expense') expense = el.id;
+                            });
+                        } catch (e) {
+                            Alert.alert('Error', (e as Error).message);
+                            console.log(e);
+                            return;  // Exit if an error occurs
+                        }
+
+                        console.log(income, expense);
+
+                        const promises = messageData.map(async (message: any) => {
+                            const result = parseSMS({ message: message.message, timestamp: message.timestamp })
+                            if (result.type == 'neither') {
+                                return
+                            }
+                            const category_id = result.type === 'income' ? income : expense;
+
+                            const transaction: Transaction = {
+                                uuid: uuid.v4() as string,
+                                category_id: category_id,
+                                amount: result.amount,
+                                description: result.message,
+                                date: result.date,
+                                source_id: 0,
+                                created_at: new Date().toDateString(),
+                                updated_at: new Date().toDateString(),
+                            }
+
+                            console.log(transaction)
+
+                            try {
+                                await createTransaction(transaction);
+                                try {
+                                    const existingTransactions = await AsyncStorage.getItem('addedTransactions')
+                                    const transactions = existingTransactions ? JSON.parse(existingTransactions as string) : []
+                                    transactions.push(result.message)
+                                    await AsyncStorage.setItem('addedTransactions', JSON.stringify(transactions))
+                                } catch (e) {
+                                    console.error('Error saving transaction', e)
+                                }
+                            } catch (e) {
+                                console.log(e);
+                                Alert.alert('Error', 'Something went wrong');
+                            }
+                        })
+
+                        await Promise.all(promises)
+                        Alert.alert('Import Completed', 'All messages from ' + sender + ' have been imported');
+                    },
+                },
+            ],
+            { cancelable: false }
+        );
+    }
 
     // Function to remove a sender from the selected list
     const removeSender = (sender: string) => {
@@ -338,10 +419,10 @@ const Settings = () => {
                 {hasSmsPermission ?
                     <>
                         <Text className='text-lg text-white font-Poppins'>Senders To Watch</Text>
-                        <Text className='text-xs text-white font-PoppinsLight'>SMSs from the senders below will be added to your transactions</Text>
+                        <Text className='text-xs text-white font-PoppinsLight'>SMSs from the senders below will be added to your transactions. Click a sender to import older messages.</Text>
                         <View>
                             <View className='my-3'>
-                                <SenderChips selectedSenders={selectedSenders} removeSender={removeSender} />
+                                <SenderChips selectedSenders={selectedSenders} removeSender={removeSender} onPress={importSenderMessages} />
                             </View>
                             <Text className='text-sm mb-3 text-white font-Poppins'>Add senders to watch from the list below</Text>
                             <TextInput

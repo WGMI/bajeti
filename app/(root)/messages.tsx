@@ -21,6 +21,7 @@ const Messages = () => {
     amount: number,
     date: string
   } | null>(null)
+  const [showEmptyMessage, setShowEmptyMessage] = useState(false)
 
   const bottomSheetRef = useRef<BottomSheet>(null)
 
@@ -34,11 +35,8 @@ const Messages = () => {
   }
 
   const saveSMS = async (details?: any) => {
-    console.log('saveSMS')
     if (smsDetails == null && details == null) return
     const data = details || smsDetails
-    console.log('SMSDetails:', smsDetails)
-    console.log('Details:', details)
     try {
       const existingTransactions = await AsyncStorage.getItem('addedTransactions')
       const transactions = existingTransactions ? JSON.parse(existingTransactions) : []
@@ -51,42 +49,16 @@ const Messages = () => {
   };
 
   const fetchFilteredMessages = async () => {
-    const extra = [
-      {
-        message: "SHT0OLF29Y Confirmed. Ksh250.00 sent to FORTUNE SACCO C2B for account 66950 on 29/8/24 at 12:42 PM. New M-PESA balance is Ksh10,538.87. Transaction cost, Ksh0.00.",
-        sender: "MPESA",
-        timestamp: 1724924546036,
-      },
-      {
-        message: "ESHT8OKN8VW Confirmed. Ksh500.00 sent to SAFARICOM DATA BUNDLES for account SAFARICOM DATA BUNDLES on 29/8/24 at 12:36 PM. New M-PESA balance is Ksh10,788.87. Transaction cost, Ksh0.00.",
-        sender: "MPESA",
-        timestamp: 1724924204197,
-      },
-      {
-        message: "ESHS4M7WUK8 Confirmed.You have received Ksh969.00 from KCB 1 501901 on 28/8/24 at 7:08 PM. New M-PESA balance is Ksh11,288.87.",
-        sender: "MPESA",
-        timestamp: 1724861338035,
-      },
-      {
-        message: "ESHS1LEBJO7 Confirmed. Ksh1,002.98 sent to M-PESA CARD for account ZOHO-WORKPLACE +6596866118 SG on 28/8/24 at 4:17 PM. New M-PESA balance is Ksh10,319.87. Transaction cost, Ksh0.00.",
-        sender: "MPESA",
-        timestamp: 1724851173901,
-      },
-    ];
-
     const messages = await getMessagesOfTheDay();
-    
-    // Combine filtered messages with extra messages
-    const data = [...messages, ...extra.map(msg => ({ [msg.sender]: [msg] }))];
-  
+
     const addedTransactions = await AsyncStorage.getItem('addedTransactions');
     const addedMessages = addedTransactions ? JSON.parse(addedTransactions) : [];
-  
+
     const discardedTransactions = await AsyncStorage.getItem('discardedMessages');
     const discardedMessages = discardedTransactions ? JSON.parse(discardedTransactions) : [];
-  
+
     // Filter out both added and discarded messages
-    const filteredMessages = data
+    const filteredMessages = messages
       .map((message) => {
         const sender = Object.keys(message)[0];
         const filteredSenderMessages = message[sender].filter(
@@ -95,10 +67,15 @@ const Messages = () => {
         return { [sender]: filteredSenderMessages };
       })
       .filter((msg) => Object.values(msg)[0].length > 0); // Remove empty sections
-  
+
+    if (messages.length == 0) {
+      setShowEmptyMessage(true)
+    } else {
+      setShowEmptyMessage(false)
+    }
     setMessageData(filteredMessages);
   };
-  
+
 
   const handleSMS = (sms: any) => {
     const result = parseSMS(sms)
@@ -112,84 +89,101 @@ const Messages = () => {
   }
 
   const handleAllSMS = async () => {
-    if (messageData.length == 0) return
-  
-    let other = 0
+    if (messageData.length == 0) return;
+
+    let income = 0;
+    let expense = 0;
+
+    // Step 1: Fetch categories and set income/expense values before moving forward
     try {
-      const otherCategory = await getCategoriesByName('Other');
-      other = otherCategory[0].id
+      const otherCategory: any = await getCategoriesByName('Other');
+      console.log(otherCategory);
+
+      otherCategory.forEach(el => {
+        if (el.type == 'income') income = el.id;
+        if (el.type == 'expense') expense = el.id;
+      });
     } catch (e) {
-      Alert.alert('e', (e as Error).message)
-      console.log(e)
+      Alert.alert('Error', (e as Error).message);
+      console.log(e);
+      return;  // Exit if an error occurs
     }
-  
+
+    console.log(income, expense);
+
+    // Step 2: Process the messages after income and expense are set
     const promises = messageData.map(async (message) => {
-      const sender = Object.keys(message)[0]
-      const messages: [] = message[sender]
-      return Promise.all(messages.map(async (msg) => {
-        const result = parseSMS({ message: msg.message, timestamp: msg.timestamp })
-        if (result.type == 'neither') {
-          return
-        }
-        console.log('Result is valid')
-        const transaction: Transaction = {
-          uuid: uuid.v4(),
-          category_id: other,
-          amount: result.amount,
-          description: result.message,
-          date: result.date,
-          source_id: 0,
-          created_at: new Date().toDateString(),
-          updated_at: new Date().toDateString(),
-        }
-        console.log('T:\n', transaction)
-        try {
-          await createTransaction(transaction);
-          console.log('save:', {
-            message: result.message,
-            type: result.type,
+      const sender = Object.keys(message)[0];
+      const messages = message[sender];
+
+      return Promise.all(
+        messages.map(async (msg) => {
+          const result = parseSMS({ message: msg.message, timestamp: msg.timestamp });
+
+          // If the SMS type is 'neither', skip the message
+          if (result.type == 'neither') {
+            return;
+          }
+
+          // Define the category based on the result type
+          const category_id = result.type === 'income' ? income : expense;
+
+          const transaction: Transaction = {
+            uuid: uuid.v4(),
+            category_id: category_id, // Use income or expense category
             amount: result.amount,
-            date: result.date
-          })
-          await saveSMS({
-            message: result.message,
-            type: result.type,
-            amount: result.amount,
-            date: result.date
-          })
-        } catch (e) {
-          console.log(e);
-          Alert.alert('Error', 'Something went wrong');
-        }
-      }))
-    })
-  
-    // Wait for all messages to be processed
-    await Promise.all(promises)
-  
-    console.log('Done')
-    fetchFilteredMessages()
-  }
-  
+            description: result.message,
+            date: result.date,
+            source_id: 0,
+            created_at: new Date().toDateString(),
+            updated_at: new Date().toDateString(),
+          };
+
+          console.log(transaction);
+
+          try {
+            await createTransaction(transaction);
+            await saveSMS({
+              message: result.message,
+              type: result.type,
+              amount: result.amount,
+              date: result.date
+            });
+          } catch (e) {
+            console.log(e);
+            Alert.alert('Error', 'Something went wrong');
+          }
+        })
+      );
+    });
+
+    // Step 3: Wait for all messages to be processed
+    await Promise.all(promises);
+
+    // Step 4: Fetch the filtered messages
+    fetchFilteredMessages();
+  };
+
+
   const discardAllSMS = async () => {
     try {
       // Fetch the current discarded messages from AsyncStorage
       const existingDiscards = await AsyncStorage.getItem('discardedMessages')
       const discardedMessages = existingDiscards ? JSON.parse(existingDiscards) : []
-  
+
       // Loop through all message data and add each message to discardedMessages
       messageData.forEach(message => {
         const sender = Object.keys(message)[0];
         const messages = message[sender];
-  
+
         messages.forEach((msg) => {
           discardedMessages.push(msg.message); // Add each message to the discarded list
         });
       });
-  
+
       // Save the updated discarded messages list back to AsyncStorage
       await AsyncStorage.setItem('discardedMessages', JSON.stringify(discardedMessages));
-  
+
       // Fetch updated messages after discarding
       fetchFilteredMessages();
     } catch (e) {
@@ -197,10 +191,9 @@ const Messages = () => {
       Alert.alert('Error', 'Something went wrong while discarding all SMS');
     }
   };
-  
+
 
   const discardSMS = async (item) => {
-    console.log(item)
     try {
       const existingDiscards = await AsyncStorage.getItem('discardedMessages')
       const discardedMessages = existingDiscards ? JSON.parse(existingDiscards) : []
@@ -241,20 +234,25 @@ const Messages = () => {
           </View>
         </View>
       </View>
-      <View className='flex-row justify-between items-center my-2'>
-        <TouchableOpacity onPress={() => handleAllSMS()} className='flex flex-1 mx-2 justify-center items-center bg-[#009F00] p-2 rounded-full'>
-          <View className='flex-row'>
-            <FontAwesome name="plus" size={24} color="#fff" />
-            <Text className='text-white font-Poppins ml-2'>Add All</Text>
+      {
+        showEmptyMessage ?
+          <Text className='mt-10 w-full text-center text-lg text-white font-PoppinsBold'>All messages received today have been added or discarded</Text>
+          :
+          <View className='flex-row justify-between items-center my-2'>
+            <TouchableOpacity onPress={() => handleAllSMS()} className='flex flex-1 mx-2 justify-center items-center bg-[#009F00] p-2 rounded-full'>
+              <View className='flex-row'>
+                <FontAwesome name="plus" size={24} color="#fff" />
+                <Text className='text-white font-Poppins ml-2'>Add All</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => discardAllSMS()} className='flex flex-1 mx-2 justify-center items-center bg-[#BD1f29] p-2 rounded-full'>
+              <View className='flex-row'>
+                <FontAwesome name="trash" size={24} color="#fff" />
+                <Text className='text-white font-Poppins ml-2'>Discard All</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => discardAllSMS()} className='flex flex-1 mx-2 justify-center items-center bg-[#BD1f29] p-2 rounded-full'>
-          <View className='flex-row'>
-            <FontAwesome name="trash" size={24} color="#fff" />
-            <Text className='text-white font-Poppins ml-2'>Discard All</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      }
       <SectionList
         sections={sectionData}
         keyExtractor={(item, index) => item.message + index}

@@ -79,7 +79,7 @@ const AddTransaction = ({ details, close, transactionType, allowSMS }: { details
   };
 
   const handleAddTransaction = async () => {
-    if (!amount || !selectedCategory.id) {
+    if (!amount || !selectedCategory.id ||amount == 0) {
       setAmountValidation(amount);
       setCategoryValidation(selectedCategory.id);
       return;
@@ -201,7 +201,7 @@ const AddTransaction = ({ details, close, transactionType, allowSMS }: { details
           <FontAwesome name='money' size={24} color={'white'} />
         </View>
         <TextInput
-          className={`flex-1 text-white font-Poppins`}
+          className={`flex-1 ${amountValidation ? 'text-white' : 'text-red-600'} font-Poppins`}
           keyboardType="numeric"
           placeholder='Amount'
           placeholderTextColor={amountValidation ? 'white' : 'red'}
