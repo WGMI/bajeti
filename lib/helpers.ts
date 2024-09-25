@@ -181,7 +181,7 @@ export const parseSMS = (sms:any) => {
   }
 
   // Determine if it's income or expense
-  if (message.includes("sent to") || message.includes("Auth for card") || message.includes("paid to")) {
+  if (message.includes("bought") || message.includes("sent to") || message.includes("Auth for card") || message.includes("paid to")) {
     result.type = "expense";
   } else if (message.includes("received") || message.includes("credited to")) {
     result.type = "income";

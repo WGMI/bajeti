@@ -58,6 +58,8 @@ export function initializeDatabase() {
             ('Groceries', 'cup.jpg',  'expense', '2024-09-01 10:30:00', '2024-09-01 10:30:00'),
             ('Rent', 'house.jpg', 'expense', '2024-09-01 10:45:00', '2024-09-01 10:45:00'),
             ('Utilities', 'case.jpg',  'expense', '2024-09-01 11:00:00', '2024-09-01 11:00:00'),
+            ('Other', 'default.jpg',  'income', '2024-09-01 11:00:00', '2024-09-01 11:00:00'),
+            ('Other', 'default.jpg',  'expense', '2024-09-01 11:00:00', '2024-09-01 11:00:00'),
             ('Dining Out', 'plate.jpg',  'expense', '2024-09-01 11:15:00', '2024-09-01 11:15:00');`
                     );
                 }
@@ -121,6 +123,26 @@ export async function getCategoriesByType(type: string) {
             tx.executeSql(
                 'SELECT * FROM categories where type = ?',
                 [type],
+                (_, results) => {
+                    resolve(results.rows._array);
+                },
+                (_, error) => {
+                    reject(error);
+                    return true;
+                }
+            );
+        }, (transactionError) => {
+            reject(transactionError);
+        });
+    });
+}
+
+export async function getCategoriesByName(name: string) {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                'SELECT * FROM categories where name = ?',
+                [name],
                 (_, results) => {
                     resolve(results.rows._array);
                 },
