@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import { deleteTransaction } from '@/db/db';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { PermissionsAndroid, Platform } from 'react-native';
-import { getMessagesFromSenderOnDate } from '@/modules/smsreader';
+import { getMessagesFromSenderInDateRange } from '@/modules/smsreader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const handleAction = async (
@@ -77,7 +77,7 @@ export const getMessagesOfTheDay = async () => {
     const messageData: any = []
     selectedSenders.forEach((sender: string) => {
       const messages: any = {}
-      messages[sender] = (getMessagesFromSenderOnDate(sender, new Date().toISOString().split('T')[0]))
+      messages[sender] = (getMessagesFromSenderInDateRange(sender, new Date().toISOString().split('T')[0]))
       messageData.push(messages)
     });
     return messageData

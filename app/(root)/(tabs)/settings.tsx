@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, Alert, ScrollView, Switch, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getMessagesFromSender, getMessagesFromSenderOnDate, getSenders } from '@/modules/smsreader';
+import { getMessagesFromSender, getSenders } from '@/modules/smsreader';
 import { PermissionsAndroid } from 'react-native';
 
 import { Category, Transaction } from '@/lib/types';

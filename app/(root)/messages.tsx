@@ -56,6 +56,7 @@ const Messages = () => {
 
     const discardedTransactions = await AsyncStorage.getItem('discardedMessages');
     const discardedMessages = discardedTransactions ? JSON.parse(discardedTransactions) : [];
+    console.log('Discarded:',discardedMessages)
 
     // Filter out both added and discarded messages
     const filteredMessages = messages
@@ -71,6 +72,7 @@ const Messages = () => {
     if (messages.length == 0) {
       setShowEmptyMessage(true)
     } else {
+      console.log('Msgs:',messages[2])
       setShowEmptyMessage(false)
     }
     setMessageData(filteredMessages);
@@ -96,7 +98,7 @@ const Messages = () => {
 
     // Step 1: Fetch categories and set income/expense values before moving forward
     try {
-      const otherCategory: any = await getCategoriesByName('Other');
+      const otherCategory = (await getCategoriesByName('Other')) as { type: 'income' | 'expense';id: number; }[];
       console.log(otherCategory);
 
       otherCategory.forEach(el => {
@@ -114,7 +116,7 @@ const Messages = () => {
     // Step 2: Process the messages after income and expense are set
     const promises = messageData.map(async (message) => {
       const sender = Object.keys(message)[0];
-      const messages = message[sender];
+      const messages: { message: string; timestamp: string }[] = message[sender];
 
       return Promise.all(
         messages.map(async (msg) => {
@@ -129,7 +131,7 @@ const Messages = () => {
           const category_id = result.type === 'income' ? income : expense;
 
           const transaction: Transaction = {
-            uuid: uuid.v4(),
+            uuid: uuid.v4() as string,
             category_id: category_id, // Use income or expense category
             amount: result.amount,
             description: result.message,

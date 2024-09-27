@@ -123,15 +123,15 @@ const index = () => {
       </View>
       <View className="flex-row justify-between items-center mb-5">
         <Text className="flex-1 mr-1 bg-[#009F00] text-white text-center font-PoppinsBold rounded-lg p-2">
-          Income: {monthIncome}
+          Income: {monthIncome.toFixed(2)}
         </Text>
         <Text className="flex-1 ml-1 bg-[#BD1f29] text-white text-center font-PoppinsBold rounded-lg p-2">
-          Expenses: {monthExpenses}
+          Expenses: {monthExpenses.toFixed(2)}
         </Text>
       </View>
       <View className="flex-row justify-between items-center mb-5">
         <Text className="flex-1 mr-1 border border-[#85d5ed]  text-white text-center font-PoppinsBold rounded-lg p-2">
-          Wallet: {income - expenses}
+          Wallet: {(income - expenses).toFixed(2)}
         </Text>
       </View>
 
@@ -140,20 +140,11 @@ const index = () => {
         ListHeaderComponent={() => (
           <View>
             <TopCategories categoryData={categoryData} />
-            <View className='flex-row'>{
-              messagesOfTheDay.some(obj => {
-                const value: any = Object.values(obj)[0]; // Get the list (value) from the object
-                return value.length > 0; // Check if the list has elements
-              }) ?
-                <TouchableOpacity onPress={viewMessagesOfTheDay}>
-                  <View className={`border border-[#85d5ed] flex-row items-center rounded-full px-3 py-1 mr-2 mb-2`}>
-                    <FontAwesome name='envelope' size={18} color='#fff' /><Text className='text-white ml-2 font-Poppins'>Add From SMS Messages</Text>
-                  </View>
-                </TouchableOpacity>
-                :
-                <></>
-            }
-            </View>
+            <TouchableOpacity onPress={viewMessagesOfTheDay}>
+              <View className={`border border-[#85d5ed] flex-row items-center justify-center rounded-full px-3 py-1 mr-2 mb-2`}>
+                <FontAwesome name='envelope' size={18} color='#fff' /><Text className='text-white ml-2 font-Poppins'>Add From SMS Messages</Text>
+              </View>
+            </TouchableOpacity>
             <View className='flex-row'>
               <Text className='text-lg text-white font-PoppinsMedium'>Transactions </Text>
               <Text className='text-lg text-white font-PoppinsLight'>Last 7 days</Text>
