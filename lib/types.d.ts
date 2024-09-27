@@ -29,6 +29,20 @@ export interface Source {
     updated_at?: string; // Optional as it's auto-generated
 }
 
+export interface Details {
+    message: string,
+    type: string,
+    amount: number,
+    date: string
+}
+
+export interface Message {
+    message: string;
+    sender: string;
+    timestamp: number;
+    [key: string]: any;
+}
+
 // General Database Operation Result Types
 export interface InsertResult {
     insertId: number; // For insert operations

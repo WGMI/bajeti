@@ -72,12 +72,14 @@ export const reload = (refresh: boolean, ref: React.RefObject<BottomSheetMethods
   if (refresh) refreshMethod()
 }
 
-export const getMessagesOfTheDay = async () => {
+export const getMessagesOfTheDay = async (date?: string) => {
   const getMessageData = (selectedSenders: any) => {
     const messageData: any = []
     selectedSenders.forEach((sender: string) => {
       const messages: any = {}
-      messages[sender] = (getMessagesFromSenderInDateRange(sender, new Date().toISOString().split('T')[0]))
+      console.log('Date:',date)
+      messages[sender] = (getMessagesFromSenderInDateRange(sender, date ?? new Date().toISOString().split('T')[0]))
+      if(!messages[sender].length) return
       messageData.push(messages)
     });
     return messageData
@@ -101,6 +103,8 @@ export const getMessagesOfTheDay = async () => {
           const storedSenders = await AsyncStorage.getItem('selectedSenders');
           if (storedSenders) {
             return getMessageData(JSON.parse(storedSenders));
+          }else{
+            return []
           }
         } catch (error) {
           console.log('Failed to load senders from storage', error);
@@ -121,23 +125,27 @@ export const fetchSenders = async () => {
     const storedSenders = await AsyncStorage.getItem('selectedSenders');
     if (storedSenders) {
       return JSON.parse(storedSenders);
+    }else{
+      return []
     }
   } catch (error) {
     Alert.alert('Failed to load senders from storage', (error as Error).message);
   }
 };
 
-export const parseSMS = (sms:any) => {
+export const parseSMS = (sms: any) => {
   let result = {
-    message:sms.message,
+    message: sms.message,
     type: "neither", // Default to "neither" if the message doesn't match income or expense
     amount: 0,
     date: ''
   };
 
   const { message, timestamp } = sms;
-  // Regular expression to find amounts in KES, Ksh, Kshs (with optional period), or USD
-  const amountRegex = /(KES|Ksh|Kshs\.?)\s?([\d,]+\.\d{1,2})|USD\s?([\d,]+\.\d{2})/;
+  
+  // Updated Regular expression to find amounts in KES, Ksh, Kshs (with optional period)
+  const amountRegex = /(?:KES|Ksh|Kshs\.?)\s?([\d,]+\.\d{1,2})/;
+  
   // Regular expression to find dates in the format dd/mm/yy, dd/mm/yyyy, or yyyy-mm-dd
   const dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}/;
 
@@ -145,12 +153,12 @@ export const parseSMS = (sms:any) => {
   const amountMatch = message.match(amountRegex);
   if (amountMatch) {
     // Remove commas and convert the amount to a float
-    const matchedAmount = amountMatch[2] || amountMatch[3];
+    const matchedAmount = amountMatch[1];
     result.amount = parseFloat(matchedAmount.replace(/,/g, ''));
   }
 
   // Helper function to format dates to yyyy-mm-dd
-  function formatDate(date:any) {
+  function formatDate(date: any) {
     const d = new Date(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -159,7 +167,7 @@ export const parseSMS = (sms:any) => {
   }
 
   // Helper function to convert dd/mm/yy or dd/mm/yyyy to yyyy-mm-dd
-  function convertShortYearDate(dateString:string) {
+  function convertShortYearDate(dateString: string) {
     const [day, month, year] = dateString.split('/');
     const fullYear = year.length === 2 ? `20${year}` : year; // Assume years like "24" are "2024"
     return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -188,5 +196,6 @@ export const parseSMS = (sms:any) => {
   }
 
   // Return the result
-  return result
-}
+  return result;
+};
+

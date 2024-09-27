@@ -2,7 +2,7 @@ import { View, Text, FlatList, Alert, TouchableOpacity } from 'react-native'
 import React, { useCallback, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import OverviewChart from '@/components/OverviewChart'
-import { fetchSenders, getMessagesOfTheDay, handleAction, reload } from '@/lib/helpers'
+import { fetchSenders, handleAction, reload } from '@/lib/helpers'
 import TopCategories from '@/components/TopCategories'
 import Controls from '@/components/controls';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
@@ -13,7 +13,6 @@ import EditTransaction from '@/components/EditTransaction'
 import { MoneyDisplay } from '@/components/MoneyDisplay'
 import { SingleTransaction } from '@/components/SingleTransaction'
 import { Href, router, useFocusEffect } from 'expo-router'
-import SenderChips from '@/components/SenderChips'
 import { FontAwesome } from '@expo/vector-icons'
 
 const index = () => {
@@ -28,7 +27,6 @@ const index = () => {
   const [detailData, setDetailData] = useState(null)
   const [detailVisible, setDetailVisible] = useState(false)
   const [transactionToEdit, setTransactionToEdit] = useState(null)
-  const [messagesOfTheDay, setMessagesOfTheDay] = useState([])
   const [senders, setSenders] = useState([])
   const bottomSheetRef = useRef<BottomSheet>(null)
 
@@ -44,8 +42,6 @@ const index = () => {
     getCategoryData()
     getUserTotal()
     getSenders()
-    const messages = await getMessagesOfTheDay()
-    setMessagesOfTheDay(messages)
   }
 
   const getSenders = async () => {

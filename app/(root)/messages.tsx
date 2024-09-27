@@ -7,32 +7,48 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import AddTransaction from '@/components/AddTransaction'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Transaction } from '@/lib/types'
+import { Category, Details, Message, Transaction } from '@/lib/types'
 import uuid from 'react-native-uuid';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { createTransaction, getCategoriesByName } from '@/db/db'
 
 const Messages = () => {
 
   const [messageData, setMessageData] = useState([])
   const [transactionType, setTransactionType] = useState('')
-  const [smsDetails, setSmsDetails] = useState<{
-    message: string,
-    type: string,
-    amount: number,
-    date: string
-  } | null>(null)
+  const [smsDetails, setSmsDetails] = useState<Details | null>(null)
   const [showEmptyMessage, setShowEmptyMessage] = useState(false)
+  const [startDate, setStartDate] = useState(new Date())
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false)
 
   const bottomSheetRef = useRef<BottomSheet>(null)
 
-  useEffect(() => {
+  /*useEffect(() => {
+    checkForSenders()
     fetchFilteredMessages()
-  }, [])
+  }, [])*/
+
+  useEffect(() => {
+    checkForSenders()
+    fetchFilteredMessages()
+  }, [startDate])
+
+  const checkForSenders = async () => {
+    const storedSenders = await AsyncStorage.getItem('selectedSenders');
+    if (!storedSenders) {
+      Alert.alert('Error', 'No senders set. Go to settings to set the SMS senders you want to monitor for transactions');
+    }
+  }
 
   const reset = () => {
     saveSMS()
     fetchFilteredMessages()
   }
+
+  const onStartDateChange = (event: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    setShowStartDatePicker(false);
+    setStartDate(selectedDate ?? new Date());
+  };
 
   const saveSMS = async (details?: any) => {
     if (smsDetails == null && details == null) return
@@ -49,30 +65,28 @@ const Messages = () => {
   };
 
   const fetchFilteredMessages = async () => {
-    const messages = await getMessagesOfTheDay();
+    console.log('Start date:',startDate.toISOString().split('T')[0])
+    const messages = await getMessagesOfTheDay(startDate.toISOString().split('T')[0]);
 
     const addedTransactions = await AsyncStorage.getItem('addedTransactions');
     const addedMessages = addedTransactions ? JSON.parse(addedTransactions) : [];
 
     const discardedTransactions = await AsyncStorage.getItem('discardedMessages');
     const discardedMessages = discardedTransactions ? JSON.parse(discardedTransactions) : [];
-    console.log('Discarded:',discardedMessages)
 
     // Filter out both added and discarded messages
     const filteredMessages = messages
-      .map((message) => {
-        const sender = Object.keys(message)[0];
-        const filteredSenderMessages = message[sender].filter(
-          (msg) => !addedMessages.includes(msg.message) && !discardedMessages.includes(msg.message)
+      .map((message: Message[]) => {
+        const sender = (Object.keys(message)[0] as keyof Message);
+        const filteredSenderMessages = (message as { [key: string]: any })[sender].filter(
+
+          (msg: Message) => !addedMessages.includes(msg.message) && !discardedMessages.includes(msg.message)
         );
         return { [sender]: filteredSenderMessages };
-      })
-      .filter((msg) => Object.values(msg)[0].length > 0); // Remove empty sections
-
-    if (messages.length == 0) {
+      }).filter((msg: Message) => Object.values(msg)[0].length > 0); // Remove empty sections
+    if (filteredMessages.length == 0) {
       setShowEmptyMessage(true)
     } else {
-      console.log('Msgs:',messages[2])
       setShowEmptyMessage(false)
     }
     setMessageData(filteredMessages);
@@ -98,12 +112,11 @@ const Messages = () => {
 
     // Step 1: Fetch categories and set income/expense values before moving forward
     try {
-      const otherCategory = (await getCategoriesByName('Other')) as { type: 'income' | 'expense';id: number; }[];
-      console.log(otherCategory);
+      const otherCategory: Category[] = (await getCategoriesByName('Other')) as Category[];
 
       otherCategory.forEach(el => {
-        if (el.type == 'income') income = el.id;
-        if (el.type == 'expense') expense = el.id;
+        if (el.type == 'income') income = el.id as number;
+        if (el.type == 'expense') expense = el.id as number;
       });
     } catch (e) {
       Alert.alert('Error', (e as Error).message);
@@ -111,12 +124,10 @@ const Messages = () => {
       return;  // Exit if an error occurs
     }
 
-    console.log(income, expense);
-
     // Step 2: Process the messages after income and expense are set
     const promises = messageData.map(async (message) => {
       const sender = Object.keys(message)[0];
-      const messages: { message: string; timestamp: string }[] = message[sender];
+      const messages: Message[] = message[sender];
 
       return Promise.all(
         messages.map(async (msg) => {
@@ -140,8 +151,6 @@ const Messages = () => {
             created_at: new Date().toDateString(),
             updated_at: new Date().toDateString(),
           };
-
-          console.log(transaction);
 
           try {
             await createTransaction(transaction);
@@ -176,7 +185,7 @@ const Messages = () => {
       // Loop through all message data and add each message to discardedMessages
       messageData.forEach(message => {
         const sender = Object.keys(message)[0];
-        const messages = message[sender];
+        const messages: Message[] = message[sender];
 
         messages.forEach((msg) => {
           discardedMessages.push(msg.message); // Add each message to the discarded list
@@ -195,7 +204,7 @@ const Messages = () => {
   };
 
 
-  const discardSMS = async (item) => {
+  const discardSMS = async (item: Details) => {
     try {
       const existingDiscards = await AsyncStorage.getItem('discardedMessages')
       const discardedMessages = existingDiscards ? JSON.parse(existingDiscards) : []
@@ -236,9 +245,26 @@ const Messages = () => {
           </View>
         </View>
       </View>
+      <View className='p-2'>
+        <Text className='mt-10 w-full text-center text-white font-Poppins p-2'>Showing messages from {startDate.toDateString()} to now.</Text>
+        <TouchableOpacity className='flex-row justify-center items-centermb-2 p-3 rounded-full border border-[#85d5ed]' onPress={() => setShowStartDatePicker(true)}>
+          <FontAwesome name="calendar" size={24} color="#fff" />
+          <Text className='ml-2 text-white text-center font-Poppins'>Select Date</Text>
+        </TouchableOpacity>
+      </View>
+      {showStartDatePicker && (
+        <DateTimePicker
+          value={startDate}
+          mode="date"
+          display="default"
+          themeVariant='dark'
+          maximumDate={new Date()}
+          onChange={onStartDateChange}
+        />
+      )}
       {
         showEmptyMessage ?
-          <Text className='mt-10 w-full text-center text-lg text-white font-PoppinsBold'>All messages received today have been added or discarded</Text>
+          <Text className='mt-10 w-full text-center text-lg text-white font-PoppinsBold p-2'>All messages have been added or discarded. Widen your search to add more messages.</Text>
           :
           <View className='flex-row justify-between items-center my-2'>
             <TouchableOpacity onPress={() => handleAllSMS()} className='flex flex-1 mx-2 justify-center items-center bg-[#009F00] p-2 rounded-full'>
