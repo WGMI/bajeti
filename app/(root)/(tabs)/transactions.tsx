@@ -60,7 +60,7 @@ const Transactions = () => {
 
     const filteredTransactions: any = rawtransactions.filter((transaction) => {
       const categoryMatch = searchCategory ? transaction.name === searchCategory : true;
-      
+
       // Handle null or undefined description
       const description = transaction.description ? transaction.description.toLowerCase() : '';
       const notesMatch = searchNotes ? description.includes(searchNotes.toLowerCase()) : true;
@@ -69,7 +69,7 @@ const Transactions = () => {
       const end = toDate ? new Date(toDate) : null;
 
       const dateMatch = (!start || new Date(transaction.date) >= start) && (!end || new Date(transaction.date) <= end);
-    
+
       return categoryMatch && dateMatch && notesMatch;
     });
 
@@ -219,7 +219,9 @@ const Transactions = () => {
           )}
         />
       </View>
-      <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, getTransactionData)} />
+      {detailData &&
+        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, getTransactionData)} />
+      }
       <Controls
         onPress={(type: string) => {
           bottomSheetRef.current?.expand()
@@ -231,7 +233,7 @@ const Transactions = () => {
           {transactionToEdit ?
             <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, getTransactionData); setTransactionToEdit(null) }} transaction={transactionToEdit} />
             :
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, getTransactionData)} />
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, getTransactionData)} allowSMS={true} />
           }
         </BottomSheetScrollView>
       </BottomSheet>

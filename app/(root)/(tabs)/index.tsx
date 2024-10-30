@@ -23,7 +23,7 @@ const index = () => {
   const [monthIncome, setMonthIncome] = useState(0)
   const [monthExpenses, setMonthExpenses] = useState(0)
   const [categoryData, setCategoryData] = useState([])
-  const [detailData, setDetailData] = useState(null)
+  const [detailData, setDetailData] = useState<Transaction | null>(null)
   const [detailVisible, setDetailVisible] = useState(false)
   const [transactionToEdit, setTransactionToEdit] = useState(null)
   const bottomSheetRef = useRef<BottomSheet>(null)
@@ -48,7 +48,7 @@ const index = () => {
       setTransactions(transactions)
     }
     catch (e) {
-      Alert.alert('Error fetching transactions', e)
+      Alert.alert('Error fetching transactions', (e as Error).message)
       console.log(e)
     }
   }
@@ -135,7 +135,9 @@ const index = () => {
           <SingleTransaction item={item} onPress={() => { setDetailData(item); setDetailVisible(true); }} />
         )}
       />
-      <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
+      {detailData &&
+        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
+      }
       <Controls
         onPress={(type: string) => {
           bottomSheetRef.current?.expand()
@@ -147,7 +149,7 @@ const index = () => {
           {transactionToEdit ?
             <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
             :
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} />
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} allowSMS={true} />
           }
         </BottomSheetScrollView>
       </BottomSheet>

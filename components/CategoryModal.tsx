@@ -113,15 +113,6 @@ const CategoryModal = ({ visible, type, setCategory, onClose, deletable, updated
             </TouchableOpacity>
           </View>
           {type == 'all' ? <></> : <View className='mt-4'>
-            {/* <TouchableOpacity 
-              className='bg-blue-500 p-3 rounded-md mb-2'
-              onPress={() => router.push('/settings')}
-            >
-              <Text className='text-white text-center font-Poppins'>New Category</Text>
-            </TouchableOpacity> */}
-
-            {/* Close Modal */}
-
           </View>}
         </View>
       </View>

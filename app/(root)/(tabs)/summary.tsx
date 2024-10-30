@@ -1,7 +1,12 @@
+import AddTransaction from '@/components/AddTransaction';
+import Controls from '@/components/controls';
+import EditTransaction from '@/components/EditTransaction';
 import OverviewChart from '@/components/OverviewChart';
 import { getSummaryData, getTransactions } from '@/db/db';
+import { reload } from '@/lib/helpers';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Href, router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, SectionList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface SummaryItem { month: string; total_income: number; total_expenses: number }
 const Summary = () => {
   const [summaryData, setSummaryData] = useState<SummaryItem[]>([]);
+  const [transactionType, setTransactionType] = useState('')
+  const [transactionToEdit, setTransactionToEdit] = useState(null)
+  const bottomSheetRef = useRef<BottomSheet>(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -16,6 +24,10 @@ const Summary = () => {
     }, [])
   );
 
+  const reset = () => {
+    getSummarizedData()
+  }
+  
   const getSummarizedData = async () => {
     try {
       const data = await getSummaryData()
@@ -69,6 +81,21 @@ const Summary = () => {
           </TouchableOpacity>
         )}
       />
+      <Controls
+        onPress={(type: string) => {
+          bottomSheetRef.current?.expand()
+          setTransactionType(type)
+        }}
+      />
+      <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
+        <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
+          {transactionToEdit ?
+            <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
+            :
+            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, reset)} allowSMS={true} />
+          }
+        </BottomSheetScrollView>
+      </BottomSheet>
     </SafeAreaView>
   );
 };

@@ -115,6 +115,26 @@ export async function getCategory(id: number) {
     });
 }
 
+export async function getCategoryByName(category: string) {
+    return new Promise((resolve, reject) => {
+        db.transaction(tx => {
+            tx.executeSql(
+                'SELECT * FROM categories where name = ?',
+                [category],
+                (_, results) => {
+                    resolve(results.rows._array);
+                },
+                (_, error) => {
+                    reject(error);
+                    return true;
+                }
+            );
+        }, (transactionError) => {
+            reject(transactionError);
+        });
+    });
+}
+
 export async function getCategoriesByType(type: string) {
     return new Promise((resolve, reject) => {
         db.transaction(tx => {

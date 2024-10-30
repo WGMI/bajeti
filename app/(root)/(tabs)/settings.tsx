@@ -1,6 +1,6 @@
 import CategoryIcons from '@/components/CategoryIcons';
 import CategoryModal from '@/components/CategoryModal';
-import { addCategory, deleteCategory, deleteTransaction, updateCategory } from '@/db/db';
+import { addCategory, deleteCategory, deleteTransaction, getCategoryByName, updateCategory } from '@/db/db';
 import { imageMap } from '@/lib/images';
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
@@ -21,13 +21,34 @@ const Settings = () => {
         setModalVisible(!isModalVisible);
     };
 
+    const exists = async (name: string) : Promise<boolean> => {
+        let exists = false
+        await getCategoryByName(name)
+            .then((categories) => {
+                if ((categories as any[]).length > 0) {
+                    exists = true
+                } else {
+                    exists = false
+                }
+            })
+            .catch((error) => {
+                Alert.alert('Error',error)
+        })
+        return exists
+    }
+
     const handleAddCategory = async () => {
         if(categoryName.length == 0) {
             Alert.alert('Error', 'Category name cannot be empty');
             return;
         }
+        const categoryExist = await exists(categoryName);
+        if(categoryExist){
+            Alert.alert('Error', 'Category already exists');
+            return
+        }
         try {
-            const addCategoryId = await addCategory(categoryName, categoryImage, categoryType);
+            const addCategoryId = await addCategory(categoryName.trim(), categoryImage, categoryType);
             setCategoryName('');
             setAddSectionVisible(false);
             setUpdated(!updated)
@@ -41,12 +62,12 @@ const Settings = () => {
     const handleEditCategory = async () => {
         try {
             setCategoryModalVisible(false)
-            setEditSectionVisible(true); setCategoryToEdit(item as any);
+            setEditSectionVisible(true); 
             await updateCategory (categoryToEdit.id, categoryToEdit.name, categoryToEdit.image, categoryToEdit.type);
             Alert.alert('Success', 'Category edited');
         } catch (error) {
             console.log(error)
-            Alert.alert('Error', 'Failed to add category: ' + error);
+            Alert.alert('Error', 'Failed to edit category: ' + error);
         }
     }
 
@@ -55,13 +76,13 @@ const Settings = () => {
             <View className='flex-row justify-between items-center bg-[#6034de] p-3 mb-4'>
                 <Text className='text-lg text-white font-PoppinsMedium'>Settings</Text>
             </View>
-            <TouchableOpacity className='mb-2 p-3 rounded-md border border-[#85d5ed]' onPress={() => {setAddSectionVisible(!addSectionVisible);setEditSectionVisible(false);setCategoryToEdit(null)}}>
+            <TouchableOpacity className='mb-2 p-3 rounded-md border border-[#85d5ed]' onPress={() => {setAddSectionVisible(!addSectionVisible);setEditSectionVisible(false);setCategoryToEdit(null);setCategoryName('');setCategoryType('income');setCategoryImage("default.jpg")}}>
                 <Text className='text-white text-center font-Poppins'>{addSectionVisible ? 'Close' : 'New Category'}</Text>
             </TouchableOpacity>
             <TouchableOpacity className='mb-2 p-3 rounded-md border border-[#85d5ed]' onPress={() => {setCategoryModalVisible(true);setAddSectionVisible(false)}}>
                 <Text className='text-white font-Poppins text-center'>Edit or Delete Category</Text>
             </TouchableOpacity>
-            <CategoryModal visible={categoryModalVisible} type={'all'} setCategory={(item) => { setEditSectionVisible(true); setCategoryToEdit(item as any); }} onClose={() => {setCategoryModalVisible(false); setCategoryToEdit(null);}} deletable={true} updated={updated} />
+            <CategoryModal visible={categoryModalVisible} type={'all'} setCategory={(item) => { console.log(item);setEditSectionVisible(true); setCategoryToEdit(item); }} onClose={() => {setCategoryModalVisible(false);}} deletable={true} updated={updated} />
             <ScrollView>
                 {/* Header */}
 
@@ -183,9 +204,14 @@ const Settings = () => {
 
                         {/* Add Category Button */}
                         <TouchableOpacity
-                            className='bg-[#6034de] rounded-md p-2'
+                            className='bg-[#6034de] rounded-md p-2 my-1'
                             onPress={handleEditCategory}>
                             <Text className='text-white font-Poppins text-center'>Edit Category</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className='bg-[#BD1f29] rounded-md p-2 my-1'
+                            onPress={() => {setEditSectionVisible(false); setCategoryToEdit(null);}}>
+                            <Text className='text-white font-Poppins text-center'>Close</Text>
                         </TouchableOpacity>
                     </View>
                     :

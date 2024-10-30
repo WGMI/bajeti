@@ -13,6 +13,7 @@ import { SingleTransaction } from '@/components/SingleTransaction'
 import CategoryModal from '@/components/CategoryModal'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { handleAction, reload } from '@/lib/helpers'
 
 const Transactions = () => {
   const [rawtransactions, setRawtransactions] = useState([])
@@ -36,6 +37,10 @@ const Transactions = () => {
   useEffect(() => {
     getMonthTransactionData(month)
   }, [month]);
+
+  const reset = () => {
+    getMonthTransactionData(month)
+  }
 
   const opensearch = () => {
     setSearchVisible(true)
@@ -226,13 +231,13 @@ const Transactions = () => {
           )}
         />
       </View>
-      <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, getTransactionData)} />
+      {detailData &&
+        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
+      }
       <BottomSheet ref={bottomSheetRef} snapPoints={['70%', '85%']} index={-1} backgroundStyle={{ backgroundColor: '#6034de' }}>
         <BottomSheetScrollView style={{ flex: 1, padding: 10, backgroundColor: '#292929' }}>
-          {transactionToEdit ?
-            <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, getTransactionData); setTransactionToEdit(null) }} transaction={transactionToEdit} />
-            :
-            <AddTransaction transactionType={transactionType} close={(refresh) => reload(refresh, bottomSheetRef, getTransactionData)} />
+          {transactionToEdit &&
+            <EditTransaction close={(refresh) => { reload(refresh, bottomSheetRef, reset); setTransactionToEdit(null) }} transaction={transactionToEdit} />
           }
         </BottomSheetScrollView>
       </BottomSheet>
