@@ -80,13 +80,13 @@ const AddTransaction = ({ details, close, transactionType, allowSMS }: { details
 
   const handleAddTransaction = async () => {
     if (!amount || !selectedCategory.id ||amount == 0) {
-      setAmountValidation(amount);
+      setAmountValidation(amount > 0);
       setCategoryValidation(selectedCategory.id);
       return;
     }
 
     const transaction: Transaction = {
-      uuid: uuid.v4(),
+      uuid: uuid.v4().toString(),
       category_id: selectedCategory.id,
       amount: amount,
       description: notes,

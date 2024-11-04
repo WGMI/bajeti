@@ -24,7 +24,7 @@ const index = () => {
   const [monthIncome, setMonthIncome] = useState(0)
   const [monthExpenses, setMonthExpenses] = useState(0)
   const [categoryData, setCategoryData] = useState([])
-  const [detailData, setDetailData] = useState(null)
+  const [detailData, setDetailData] = useState<Transaction | null>(null);
   const [detailVisible, setDetailVisible] = useState(false)
   const [transactionToEdit, setTransactionToEdit] = useState(null)
   const [senders, setSenders] = useState([])
@@ -152,7 +152,9 @@ const index = () => {
           <SingleTransaction item={item} onPress={() => { setDetailData(item); setDetailVisible(true); }} />
         )}
       />
-      <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
+      {detailData &&
+        <DetailsModal transaction={detailData} visible={detailVisible} onClose={() => { setDetailData(null); setDetailVisible(false); }} action={(transaction, action) => handleAction(transaction, action, bottomSheetRef, setTransactionToEdit, reset)} />
+      }
       <Controls
         onPress={(type: string) => {
           bottomSheetRef.current?.expand()
